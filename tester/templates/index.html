@@ -14,10 +14,10 @@
 {% get_social_accounts user as accounts %}
 {% endif %}
 
-{% if accounts %}
-<p>Benvinguda, ja estas logada :)</p>
-{% else %}
+{% if not accounts %}
 Loga't via <a href='{% provider_login_url "google" %}'>Google</a>
+{% else %}
+<p>Hola {{ request.user.first_name }}, ja ets a dins :)</p>
 {% endif %}
 
 </body>
