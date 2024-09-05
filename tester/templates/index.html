@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>IOC Autotest</title>
+</head>
+<body>
+
+	<h1>IOC Autotest</h1>
+
+{% load socialaccount %}
+{% if request.user.is_authenticated %}
+{% get_social_accounts user as accounts %}
+{% endif %}
+
+{% if accounts %}
+<p>Benvinguda, ja estas logada :)</p>
+{% else %}
+Loga't via <a href='{% provider_login_url "google" %}'>Google</a>
+{% endif %}
+
+</body>
+</html>
