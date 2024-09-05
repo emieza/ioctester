@@ -4,10 +4,53 @@
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<title>IOC Autotest</title>
+	<style type="text/css">
+		.header {
+			background-color: #ccc;
+			padding: 1em;
+			margin: 0em;
+			border-collapse: collapse;
+			font-family: 'sans-serif';
+			font-weight: bold;
+		}
+
+		.userbox {
+			float: right;
+			font-family: 'serif';
+			font-weight: normal;
+		}
+	</style>
+	<script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+	<script type="text/javascript">
+		function canvia_prova() {
+			if( parseInt($("#prova").val()) )
+				$("#go").prop("disabled",false);
+			else
+				$("#go").prop("disabled",true);
+		}
+
+		function fes_prova() {
+			var prova_id = $("#prova").val();
+			$.ajax({
+				url: "/api/executa_prova/"+prova_id,
+				success: function(result) {
+					// Mostrar resultats de l'execució de la prova
+					var cap = "\n==============================================================================================\n"
+					var textArea = $("#resultat");
+					var newtext = textArea.val() + cap+result.message + "\n";
+					textArea.val( newtext );
+					//alert(result.message);
+					// fer scroll al final
+					textArea.scrollTop(textArea[0].scrollHeight-textArea.height());
+				},
+				fail: function(result) {
+					alert("ERROR");
+				}
+			})
+		}
+	</script>
 </head>
 <body>
-
-	<h1>IOC Autotest</h1>
 
 {% load socialaccount %}
 {% if request.user.is_authenticated %}
@@ -15,9 +58,33 @@
 {% endif %}
 
 {% if not accounts %}
-Loga't via <a href='{% provider_login_url "google" %}'>Google</a>
+	<div class="header">IOC Autotest</div>
+
+	<p>Loga't via <a href='{% provider_login_url "google" %}'>Google</a></p>
 {% else %}
-<p>Hola {{ request.user.first_name }}, ja ets a dins :)</p>
+
+	<div class="header">
+		IOC Autotest
+		<span class="userbox">Hola {{ request.user.first_name }}.
+			<a href="">Sortir</a></span>
+	</div>
+
+
+	<p>Selecciona una prova a executar:</p>
+	<select id="prova" onchange="canvia_prova()">
+		<option>Selecciona una prova a executar...</option>
+		{% for prova in proves %}
+			<option value="{{prova.id}}">{{prova}}</option>
+		{% endfor %}
+	</select>
+
+	<button disabled id="go" onclick="fes_prova()">Executa la prova</button>
+
+	<br>
+
+	<h2>Resultat de les proves</h2>
+	<textarea style="width:100%" cols="80" rows="25" id="resultat" disabled></textarea>
+
 {% endif %}
 
 </body>

@@ -88,7 +88,7 @@ AUTHENTICATION_BACKENDS = [
     'allauth.account.auth_backends.AuthenticationBackend',
 ]
 
-"""SOCIALACCOUNT_PROVIDERS = {
+SOCIALACCOUNT_PROVIDERS = {
     'google': {
         'APP': {
             'client_id': env('GOOGLE_CLIENT_ID'),
@@ -96,7 +96,7 @@ AUTHENTICATION_BACKENDS = [
             'key': '' #env('GOOGLE_KEY') # no cal per a google
         }
     }
-}"""
+}
 
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
