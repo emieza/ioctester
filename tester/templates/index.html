@@ -13,11 +13,13 @@
 			font-family: 'sans-serif';
 			font-weight: bold;
 		}
-
 		.userbox {
 			float: right;
 			font-family: 'serif';
 			font-weight: normal;
+		}
+		#resultat[disabled] {
+			color: blue;
 		}
 	</style>
 	<script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
@@ -39,7 +41,6 @@
 					var textArea = $("#resultat");
 					var newtext = textArea.val() + cap+result.message + "\n";
 					textArea.val( newtext );
-					//alert(result.message);
 					// fer scroll al final
 					textArea.scrollTop(textArea[0].scrollHeight-textArea.height());
 				},
