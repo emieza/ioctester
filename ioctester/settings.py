@@ -65,7 +65,7 @@ ROOT_URLCONF = 'ioctester.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [ BASE_DIR / "templates", ],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -97,6 +97,14 @@ SOCIALACCOUNT_PROVIDERS = {
         }
     }
 }
+
+ACCOUNT_AUTHENTICATION_METHOD = 'email'
+ACCOUNT_USERNAME_REQUIRED = True
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_UNIQUE_EMAIL = True
+ACCOUNT_EMAIL_VERIFICATION = "mandatory"
+ACCOUNT_USER_MODEL_USERNAME_FIELD = "username"
+#ACCOUNT_USER_MODEL_EMAIL_FIELD = 'email'
 
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases

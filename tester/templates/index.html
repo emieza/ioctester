@@ -60,13 +60,11 @@
 
 {% if not accounts %}
 	<div class="header">IOC Autotest</div>
-
 	<p>Loga't via <a href='{% provider_login_url "google" %}'>Google</a></p>
 {% else %}
-
 	<div class="header">
 		IOC Autotest
-		<span class="userbox">Hola {{ request.user.first_name }}.
+		<span class="userbox">Hola {{ request.user.first_name }} {{ request.user.last_name }}.
 			<a href="/accounts/logout">Sortir</a></span>
 	</div>
 

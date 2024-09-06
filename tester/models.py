@@ -42,7 +42,7 @@ class Prova(models.Model):
     anotacions = models.TextField(null=True,blank=True,
                 help_text="Anotacions privades per al professorat.")
     instruccio = models.TextField(
-                help_text='"Comanda" a executar. Si s\'executa al servidor podeu emprar el codi "%IP" per referenciar la IP del client.')
+                help_text='"Comanda" a executar. Si s\'executa al servidor podeu emprar el codi "%IP" per referenciar la IP del client. No utilitzar cometes simples, o escapar-les amb \\ si son imprescindibles.')
     connexio_ssh = models.BooleanField(default=True,
                 help_text="La instrucció s'executarà al client via SSH. Cal ajustar les claus SSH. Si no es selecciona, la instrucció s'excecutarà al servidor.")
     def __str__(self):

@@ -15,12 +15,19 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-
+from django.http import HttpResponse
 from tester import views
 
+def empty_view(request):
+    return HttpResponse("Disabled")
+
 urlpatterns = [
+    # disabled views
+    #path('accounts/signup/', empty_view ),
+    # 
     path('', views.index),
     path('admin/', admin.site.urls),
     path('accounts/', include('allauth.urls')),
     path('api/executa_set/<int:set_id>', views.executa_set),
 ]
+
