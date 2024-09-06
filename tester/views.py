@@ -31,7 +31,7 @@ def executa_set(request,set_id):
             resultat += "[PROVA {}/{}]: {}\n".format(i,total,prova.nom)
             i += 1
             instruccio = prova.instruccio.replace("%IP",ip)
-            resultat += "Executant instrucció: " + instruccio + "\n"
+            resultat += "Executant instrucció...(ssh={})\n".format(prova.connexio_ssh)
             intent.registre = resultat
             intent.save()
 
