@@ -22,5 +22,5 @@ urlpatterns = [
     path('', views.index),
     path('admin/', admin.site.urls),
     path('accounts/', include('allauth.urls')),
-    path('api/executa_prova/<int:prova_id>', views.executa_prova),
+    path('api/executa_set/<int:set_id>', views.executa_set),
 ]

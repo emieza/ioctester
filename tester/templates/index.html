@@ -24,17 +24,17 @@
 	</style>
 	<script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
 	<script type="text/javascript">
-		function canvia_prova() {
-			if( parseInt($("#prova").val()) )
+		function canvia_set() {
+			if( parseInt($("#set").val()) )
 				$("#go").prop("disabled",false);
 			else
 				$("#go").prop("disabled",true);
 		}
 
-		function fes_prova() {
-			var prova_id = $("#prova").val();
+		function executa_set() {
+			var set_id = $("#set").val();
 			$.ajax({
-				url: "/api/executa_prova/"+prova_id,
+				url: "/api/executa_set/"+set_id,
 				success: function(result) {
 					// Mostrar resultats de l'execució de la prova
 					var cap = "\n==============================================================================================\n"
@@ -71,15 +71,15 @@
 	</div>
 
 
-	<p>Selecciona una prova a executar:</p>
-	<select id="prova" onchange="canvia_prova()">
-		<option>Selecciona una prova a executar...</option>
-		{% for prova in proves %}
-			<option value="{{prova.id}}">{{prova}}</option>
+	<p>Selecciona un set de proves a executar:</p>
+	<select id="set" onchange="canvia_set()">
+		<option>Selecciona un set de proves a executar...</option>
+		{% for set in sets %}
+			<option value="{{set.id}}">{{set}}</option>
 		{% endfor %}
 	</select>
 
-	<button disabled id="go" onclick="fes_prova()">Executa la prova</button>
+	<button disabled id="go" onclick="executa_set()">Executa el set de proves</button>
 
 	<br>
 
