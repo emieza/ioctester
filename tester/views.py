@@ -20,8 +20,14 @@ def executa_set(request,set_id):
                             ip=ip, registre=resultat )
 
         # Iterem llista de Proves dins el Set
+        i = 1
+        ok = 0
+        fail = 0
+        total = myset.prova_set.count()
+        superades = []
         for prova in myset.prova_set.all():
-            resultat += "PROVA: {}\n".format(prova.nom)
+            resultat += "\n[PROVA {}/{}]: {}\n".format(i,total,prova.nom)
+            i += 1
             instruccio = prova.instruccio.replace("%IP",ip)
             resultat += "Executant instrucció: " + instruccio + "\n"
             intent.registre = resultat
@@ -30,26 +36,44 @@ def executa_set(request,set_id):
             # Afegim connexio SSH si pertoca        
             if prova.connexio_ssh:
                 conn_str = "ssh isard@" + ip
-                instruccio = conn_str + " " + instruccio
+                instruccio = conn_str + " '" + instruccio + "'"
+            # Ajustem salts de línia per a Unix
+            instruccio = instruccio.replace("\r","\n")
             # Executar comanda
-            completedProc = subprocess.run( instruccio, shell=True,
-                                  capture_output=True )
+            completedProc = subprocess.run( instruccio,
+                                shell=True, capture_output=True )
             #print(str(completedProc))
 
             # Processar sortida de la comanda
             if completedProc.returncode==0:
-                resultat +="[SUCCESS]\n{}\n[SUCCESS]\n".format(completedProc.stdout.decode("utf-8"))
+                resultat +="[SUCCESS]\n{}\n[SUCCESS] Prova {}/{} - {}\n".format(
+                    completedProc.stdout.decode("utf-8"),i-1,total,prova.nom)
+                ok +=1
+                superades.append("OK")
             else:
+                fail += 1
+                superades.append("ERROR")
                 resultat += "[FAIL] exit code = {}\n\t{}\n[FAIL]\n".format(
                     completedProc.returncode, completedProc.stderr.decode("utf-8") )
                 if prova.connexio_ssh and completedProc.returncode==255:
-                    resultat += "\tProbablement la teva màquina no es deixa accedir per SSH. Comprova que no hagis malmès l'usuari de connexió (isard)."
+                    resultat += "\tProbablement la teva màquina no es deixa accedir per SSH. Comprova que no hagis malmès l'usuari de connexió (isard).\n"
 
-            # Guardem a la BD
+            # Guardem resultat a la BD
             intent.registre = resultat
             intent.save()
 
-        # TODO: processar resultat en %
+        # Processar resultat en %
+        intent.resultat = ok*100/total
+        resultat += "\n[RESUM] Proves exitoses: {}/{}. Resultat = {} %\n".format(
+                        ok,total,intent.resultat)
+        # Resum proves
+        i = 0
+        for prova in myset.prova_set.all():
+            resultat += "\t[Prova {}/{}] {} - {}\n".format(i+1,total,
+                            superades[i], prova.nom )
+            i += 1
+        intent.registre = resultat
+        intent.save()
 
         # Retornar resultats
         ret = {
