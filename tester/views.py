@@ -12,7 +12,8 @@ def index(request):
 @login_required
 def executa_set(request,set_id):
     ip = get_client_ip(request)
-    resultat = "Iniciant set de proves {} per a usuari {} en IP={}\n".format(
+    resultat = "---------------------------------------------------------------------------\n"
+    resultat += "Iniciant set de proves {} per a usuari {} en IP={}\n".format(
                     set_id, request.user, ip)
     try:
         myset = Set.objects.get(id=set_id)
@@ -26,7 +27,8 @@ def executa_set(request,set_id):
         total = myset.prova_set.count()
         superades = []
         for prova in myset.prova_set.all():
-            resultat += "\n[PROVA {}/{}]: {}\n".format(i,total,prova.nom)
+            resultat += "---------------------------------------------------------------------------\n"
+            resultat += "[PROVA {}/{}]: {}\n".format(i,total,prova.nom)
             i += 1
             instruccio = prova.instruccio.replace("%IP",ip)
             resultat += "Executant instrucció: " + instruccio + "\n"
@@ -64,7 +66,9 @@ def executa_set(request,set_id):
 
         # Processar resultat en %
         intent.resultat = ok*100/total
-        resultat += "\n[RESUM] Proves exitoses: {}/{}. Resultat = {} %\n".format(
+        resultat += "---------------------------------------------------------------------------\n"
+        resultat += "[RESUM] Intent id {}\n".format(intent.id)
+        resultat += "\tProves exitoses: {}/{}. Resultat = {} %\n".format(
                         ok,total,intent.resultat)
         # Resum proves
         i = 0
