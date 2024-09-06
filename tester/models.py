@@ -55,8 +55,8 @@ class Prova(models.Model):
         return instance
 
 class Intent(models.Model):
-    set = models.ForeignKey(Set,on_delete=models.SET_NULL,null=True)
-    alumne = models.ForeignKey(User,on_delete=models.SET_NULL,null=True)
+    set = models.ForeignKey(Set,on_delete=models.CASCADE,null=True)
+    alumne = models.ForeignKey(User,on_delete=models.CASCADE,null=True)
     resultat = models.FloatField(default=0.0,
                 help_text="Percentatge de compleció de les proves")
     registre = models.TextField()
@@ -67,5 +67,9 @@ class Intent(models.Model):
     anotacions_docent = models.TextField(null=True,blank=True,
                 help_text="Anotacions i feedback del docent.")
     def __str__(self):
-        return self.prova.nom + " - " + self.alumne.first_name + " " + self.alumne.last_name
+        return "{} - {} {} ({})".format( self.set.nom, self.alumne.first_name,
+                self.alumne.last_name, self.alumne.email)
+    def nom_alumne(self):
+        return "{} {} ({})".format( self.alumne.first_name,
+                self.alumne.last_name, self.alumne.email)
 

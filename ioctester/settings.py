@@ -105,6 +105,9 @@ ACCOUNT_UNIQUE_EMAIL = True
 ACCOUNT_EMAIL_VERIFICATION = "mandatory"
 ACCOUNT_USER_MODEL_USERNAME_FIELD = "username"
 #ACCOUNT_USER_MODEL_EMAIL_FIELD = 'email'
+ACCOUNT_ADAPTER = 'tester.adapters.CustomAccountAdapter'
+SOCIALACCOUNT_ADAPTER = 'tester.adapters.CustomSocialAccountAdapter'
+ALLOWED_GOOGLE_DOMAINS = env.list("ALLOWED_GOOGLE_DOMAINS")
 
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
