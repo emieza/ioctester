@@ -17,8 +17,9 @@ class ProvaAdmin(admin.ModelAdmin):
 	search_fields = ["nom","creador","categoria__nom"]
 
 class ProvaInline(admin.StackedInline):
-	model = Prova
-	fields = ("nom","connexio_ssh","instruccio","descripcio" )
+    model = Prova
+    fields = ("nom","connexio_ssh","instruccio","descripcio" )
+    extra = 1
 
 class SetAdmin(admin.ModelAdmin):
 	model = Set
