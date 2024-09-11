@@ -23,7 +23,7 @@
 		}
 		#progressbarbox {
 			display: inline-block;
-			width: 120px;
+			width: 240px;
 			height: 1em;
 			background-color: #ddd;
 		}
@@ -46,16 +46,16 @@
 		var progres = 1;
 		function progressa() {
 			$("#progressbar").width(progres)
-			progres += 2;
+			progres += 1;
 		}
 
 		function executa_set() {
 			var set_id = $("#set").val();
 			progres = 1;
-			var timer = setInterval(progressa,1000);
+			var timer = setInterval(progressa,500);
 			$.ajax({
 				url: "/api/executa_set/"+set_id,
-				timeout: 60000,
+				timeout: 1200000,
 				success: function(result) {
 					// Mostrar resultats de l'execució de la prova
 					var cap = "\n==============================================================================================\n"
