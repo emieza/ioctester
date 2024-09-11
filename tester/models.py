@@ -12,6 +12,7 @@ class Categoria(models.Model):
 
 class Set(models.Model):
     nom = models.CharField(max_length=200)
+    actiu = models.BooleanField(default=True)
     categoria = models.ManyToManyField(Categoria)
     creador = models.ForeignKey(User,on_delete=models.SET_NULL,null=True)
     creacio = models.DateTimeField(auto_now=True)
@@ -33,6 +34,7 @@ class Prova(models.Model):
     class Meta:
         verbose_name_plural = "proves"
     nom = models.CharField(max_length=200)
+    activa = models.BooleanField(default=True)
     set = models.ForeignKey(Set,on_delete=models.CASCADE,null=True)
     creador = models.ForeignKey(User,on_delete=models.SET_NULL,null=True)
     creacio = models.DateTimeField(auto_now=True)
@@ -45,6 +47,7 @@ class Prova(models.Model):
                 help_text='"Comanda" a executar. Si s\'executa al servidor podeu emprar el codi "%IP" per referenciar la IP del client. No utilitzar cometes simples, o escapar-les amb \\ si son imprescindibles.')
     connexio_ssh = models.BooleanField(default=True,
                 help_text="La instrucció s'executarà al client via SSH. Cal ajustar les claus SSH. Si no es selecciona, la instrucció s'excecutarà al servidor.")
+    pes = models.FloatField(default=1.0);
     def __str__(self):
         return self.nom
     def save_model(self, request, instance, form, change):

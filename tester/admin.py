@@ -18,13 +18,13 @@ class ProvaAdmin(admin.ModelAdmin):
 
 class ProvaInline(admin.StackedInline):
     model = Prova
-    fields = ("nom","connexio_ssh","instruccio","descripcio" )
+    fields = ("nom","activa","connexio_ssh","pes","instruccio","descripcio" )
     extra = 1
 
 class SetAdmin(admin.ModelAdmin):
 	model = Set
 	readonly_fields = ["creador"]
-	list_display = ["nom","creador"]
+	list_display = ["nom","actiu","creador"]
 	search_fields = ["nom","creador","categoria__nom"]
 	inlines = [ProvaInline,]
 

@@ -6,7 +6,7 @@ import subprocess, sys, os
 from .models import *
 
 def index(request):
-    sets = Set.objects.all()
+    sets = Set.objects.filter(actiu=True)
     return render( request, "index.html", {"sets":sets} )
 
 @login_required
@@ -22,11 +22,13 @@ def executa_set(request,set_id):
 
         # Iterem llista de Proves dins el Set
         i = 1
-        ok = 0
-        fail = 0
-        total = myset.prova_set.count()
+        punts_ok = 0
+        punts_fail = 0
+        proves_ok = 0
+        proves_fail = 0
+        total = myset.prova_set.filter(activa=True).count()
         superades = []
-        for prova in myset.prova_set.all():
+        for prova in myset.prova_set.filter(activa=True):
             resultat += "---------------------------------------------------------------------------\n"
             resultat += "[PROVA {}/{}]: {}\n".format(i,total,prova.nom)
             i += 1
@@ -50,10 +52,12 @@ def executa_set(request,set_id):
             if completedProc.returncode==0:
                 resultat +="[SUCCESS]\n{}\n[SUCCESS] Prova {}/{} - {}\n".format(
                     completedProc.stdout.decode("utf-8"),i-1,total,prova.nom)
-                ok +=1
+                proves_ok += 1
+                punts_ok += prova.pes
                 superades.append("OK")
             else:
-                fail += 1
+                proves_fail += 1
+                punts_fail += prova.pes
                 superades.append("ERROR")
                 resultat += "[FAIL] exit code = {}\n\t{}\n[FAIL]\n".format(
                     completedProc.returncode, completedProc.stderr.decode("utf-8") )
@@ -65,16 +69,16 @@ def executa_set(request,set_id):
             intent.save()
 
         # Processar resultat en %
-        intent.resultat = ok*100/total
+        intent.resultat = punts_ok*100/(punts_ok+punts_fail)
         resultat += "---------------------------------------------------------------------------\n"
         resultat += "[RESUM] Intent id {}\n".format(intent.id)
         resultat += "\tProves exitoses: {}/{}. Resultat = {} %\n".format(
-                        ok,total,intent.resultat)
+                        proves_ok,proves_ok+proves_fail,intent.resultat)
         # Resum proves
         i = 0
-        for prova in myset.prova_set.all():
-            resultat += "\t[Prova {}/{}] {} - {}\n".format(i+1,total,
-                            superades[i], prova.nom )
+        for prova in myset.prova_set.filter(activa=True):
+            resultat += "\t[Prova {}/{} - {} punts] {} - {}\n".format(i+1,
+                            total, prova.pes, superades[i], prova.nom )
             i += 1
         intent.registre = resultat
         intent.save()

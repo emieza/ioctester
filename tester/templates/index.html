@@ -21,6 +21,18 @@
 		#resultat[disabled] {
 			color: blue;
 		}
+		#progressbarbox {
+			display: inline-block;
+			width: 120px;
+			height: 1em;
+			background-color: #ddd;
+		}
+		#progressbar {
+			display: inline-block;
+			width: 0;
+			height: 1em;
+			background-color: grey;
+		}
 	</style>
 	<script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
 	<script type="text/javascript">
@@ -31,10 +43,19 @@
 				$("#go").prop("disabled",true);
 		}
 
+		var progres = 1;
+		function progressa() {
+			$("#progressbar").width(progres)
+			progres += 2;
+		}
+
 		function executa_set() {
 			var set_id = $("#set").val();
+			progres = 1;
+			var timer = setInterval(progressa,1000);
 			$.ajax({
 				url: "/api/executa_set/"+set_id,
+				timeout: 60000,
 				success: function(result) {
 					// Mostrar resultats de l'execució de la prova
 					var cap = "\n==============================================================================================\n"
@@ -43,11 +64,25 @@
 					textArea.val( newtext );
 					// fer scroll al final
 					textArea.scrollTop(textArea[0].scrollHeight-textArea.height());
+					setTimeout(function() {
+						// si no ho fem aixi, l'alert bloqueja el render del resultat
+						alert("Execució exitosa :)");
+					},0);
 				},
 				fail: function(result) {
 					alert("ERROR");
+				},
+				complete: function(data,textStatus) {
+					clearInterval(timer);
+					progres = 0;
+					progressa();
+					if(textStatus=="timeout")
+						alert("Esgotat el temps d'execució (timeout).");
 				}
 			})
+		}
+		function neteja() {
+			$("textarea").val("");
 		}
 	</script>
 </head>
@@ -79,7 +114,14 @@
 
 	<button disabled id="go" onclick="executa_set()">Executa el set de proves</button>
 
+	<button onclick="neteja()">Neteja</button>
+	<span id="progressbarbox">
+		<span id="progressbar"></span>
+	</span>
+
 	<br>
+
+	<div id="missatges"></div>
 
 	<h2>Resultat de les proves</h2>
 	<textarea style="width:100%" cols="80" rows="25" id="resultat" disabled></textarea>
