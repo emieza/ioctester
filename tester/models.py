@@ -31,11 +31,17 @@ class Set(models.Model):
         return instance
 
 class Prova(models.Model):
+    TIPUS = (
+        ("BASHCLI","Script bash al client"),
+        ("BASHSRV","Script bash al servidor"),
+        ("SELESRV","Script Selenium en JavaScript des del servidor")
+    )
     class Meta:
         verbose_name_plural = "proves"
     nom = models.CharField(max_length=200)
     activa = models.BooleanField(default=True)
     set = models.ForeignKey(Set,on_delete=models.CASCADE,null=True)
+    tipus = models.CharField(max_length=8,default="BASHCLI",choices=TIPUS)
     creador = models.ForeignKey(User,on_delete=models.SET_NULL,null=True)
     creacio = models.DateTimeField(auto_now=True)
     actualitzacio = models.DateTimeField(auto_now=True)
@@ -43,10 +49,10 @@ class Prova(models.Model):
                 help_text="Descripció pública per a l'alumnat.")
     anotacions = models.TextField(null=True,blank=True,
                 help_text="Anotacions privades per al professorat.")
-    instruccio = models.TextField(
-                help_text='"Comanda" a executar. Si s\'executa al servidor podeu emprar el codi "%IP" per referenciar la IP del client. No utilitzar cometes simples, o escapar-les amb \\ si son imprescindibles.')
+    script = models.TextField(
+                help_text='"Comanda" o instrucció a executar.')
     connexio_ssh = models.BooleanField(default=True,
-                help_text="La instrucció s'executarà al client via SSH. Cal ajustar les claus SSH. Si no es selecciona, la instrucció s'excecutarà al servidor.")
+                help_text="DEPRECATED, no utilitzar. Veure TIPUS en el seu lloc.")
     pes = models.FloatField(default=1.0);
     def __str__(self):
         return self.nom

@@ -30,8 +30,7 @@ def executa_set(request,set_id):
         for prova in myset.prova_set.filter(activa=True):
             resultat += "---------------------------------------------------------------------------\n"
             resultat += "[PROVA {}/{}]: {}\n".format(i,total,prova.nom)
-            i += 1
-            resultat += "Executant instrucció...(ssh={})\n".format(prova.connexio_ssh)
+            resultat += "Executant script de prova ({})\n".format(prova.tipus)
             intent.registre = resultat
             intent.save()
 
@@ -50,18 +49,19 @@ def executa_set(request,set_id):
             resultat += prova_msg
             intent.registre = resultat
             intent.save()
+            i += 1
 
         # Processar resultat en %
         intent.resultat = punts_ok*100/(punts_ok+punts_fail)
-        resultat += "---------------------------------------------------------------------------\n"
+        resultat += "\n---------------------------------------------------------------------------\n"
         resultat += "[RESUM] Intent id {}\n".format(intent.id)
         resultat += "\tProves exitoses: {}/{}. Resultat = {} %\n".format(
                         proves_ok,proves_ok+proves_fail,intent.resultat)
         # Resum proves
-        i = 0
+        i = 1
         for prova in myset.prova_set.filter(activa=True):
-            resultat += "\t[Prova {}/{} - {} punts] {} - {}\n".format(i+1,
-                            total, prova.pes, superades[i], prova.nom )
+            resultat += "\t[Prova {}/{} - {} punts] {} - {}\n".format(i,
+                            total, prova.pes, superades[i-1], prova.nom )
             i += 1
         intent.registre = resultat
         intent.save()
@@ -86,15 +86,16 @@ def executa_prova(prova,ip,intent_id,prova_num):
     nom_arxiu = "/tmp/ioctesterscript_{}_{}.sh".format(intent_id,prova_num)
 
     # guardem script en arxiu temporal
-    instruccio = prova.instruccio.replace("%IP",ip)
-    script = instruccio.replace("\r","\n") # corregim salts de línia per a Unix
+    script = prova.script.replace("%IP",ip) # substituim %IP per la IP del client
+    script2 = script.replace("\r","\n") # corregim salts de línia per a Unix
     f = open(nom_arxiu, "w")
-    f.write(script)
+    f.write(script2)
     f.close()
 
-    # executem comanda
-    instruccio = "bash {}".format(nom_arxiu)
-    if prova.connexio_ssh:
+    # executem script
+    # opció BASHSRV:
+    instruccio = None
+    if prova.tipus=="BASHCLI":
         # traslladem script via scp
         completedScp = subprocess.run ("scp {} isard@".format(nom_arxiu)+ip+
                 ":{}".format(nom_arxiu), shell=True, capture_output=True)
@@ -105,6 +106,13 @@ def executa_prova(prova,ip,intent_id,prova_num):
             return False, missatge
         # si arribem aquí és que s'ha transferit OK l'script per scp
         instruccio = "ssh isard@"+ip+" bash {}".format(nom_arxiu)
+    elif prova.tipus=="BASHSRV":
+        instruccio = "bash {}".format(nom_arxiu)
+    elif prova.tipus=="SELESRV":
+        instruccio = "cd /tmp; MOZ_HEADLESS=1 node {}".format(nom_arxiu)
+    else:
+        missatge += "[ERROR] Error intern del tipus de prova.\n"
+        return False, missatge
 
     # Executar comanda
     completedProc = subprocess.run( instruccio,
@@ -118,7 +126,7 @@ def executa_prova(prova,ip,intent_id,prova_num):
     if completedRm.returncode!=0:
         print("[WARNING] no s'ha pogut eliminar script servidor")
         resultat += "\t[WARNING] no s'ha pogut eliminar script servidor"
-    if prova.connexio_ssh:
+    if prova.tipus=="BASHCLI" or prova.tipus=="SLNMCLI":
         # script remot (client)
         completedRm = subprocess.run ("ssh isard@"+ip+" rm {}".format(nom_arxiu),
                         shell=True, capture_output=True)
@@ -129,13 +137,17 @@ def executa_prova(prova,ip,intent_id,prova_num):
     # Processar sortida de la comanda
     if completedProc.returncode==0:
         missatge +="[SUCCESS]\n{}\n[SUCCESS] Prova {} - {}\n".format(
-            completedProc.stdout.decode("utf-8"),prova_num-1,prova.nom)
+            completedProc.stdout.decode("utf-8"),prova_num,prova.nom)
         return True, missatge
     
     # si arribem aquí es que ha fallat l'execució
-    missatge += "[FAIL] exit code = {}\n\t{}\n[FAIL] Prova {} - {}\n".format(
-        completedProc.returncode, completedProc.stderr.decode("utf-8"),prova_num,prova.nom )
-    if prova.connexio_ssh and completedProc.returncode==255:
+    missatge += "[FAIL] exit code = {}\n\
+\t.....stdout......\n{}\n\
+\t.....stderr......\n{}\n\
+[FAIL] Prova {} - {}\n".format(
+        completedProc.returncode, completedProc.stdout.decode("utf-8"),
+        completedProc.stderr.decode("utf-8"),prova_num,prova.nom )
+    if prova.tipus=="BASHCLI" and completedProc.returncode==255:
         missatge += "\tProbablement la teva màquina no es deixa accedir per SSH. Comprova que no hagis malmès l'usuari de connexió (isard).\n"
     return False, missatge
 

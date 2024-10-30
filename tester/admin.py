@@ -18,7 +18,8 @@ class ProvaAdmin(admin.ModelAdmin):
 
 class ProvaInline(admin.StackedInline):
     model = Prova
-    fields = ("nom","activa","connexio_ssh","pes","instruccio","descripcio" )
+    fields = ("nom","tipus","activa","connexio_ssh","pes","script","descripcio" )
+    readonly_fields = ("connexio_ssh",)
     extra = 1
 
 class SetAdmin(admin.ModelAdmin):
