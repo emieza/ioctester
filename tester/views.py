@@ -32,21 +32,56 @@ def executa_set(request,set_id):
             resultat += "---------------------------------------------------------------------------\n"
             resultat += "[PROVA {}/{}]: {}\n".format(i,total,prova.nom)
             i += 1
-            instruccio = prova.instruccio.replace("%IP",ip)
             resultat += "Executant instrucció...(ssh={})\n".format(prova.connexio_ssh)
             intent.registre = resultat
             intent.save()
 
-            # Afegim connexio SSH si pertoca        
+            # guardem script en arxiu temporal
+            instruccio = prova.instruccio.replace("%IP",ip)
+            script = instruccio.replace("\r","\n") # corregim salts de línia per a Unix
+            f = open("/tmp/ioctesterscript.sh", "w")
+            f.write(script)
+            f.close()
+
+            # executem comanda
+            instruccio = "bash /tmp/ioctesterscript.sh"
             if prova.connexio_ssh:
-                conn_str = "ssh isard@" + ip
-                instruccio = conn_str + " '" + instruccio + "'"
-            # Ajustem salts de línia per a Unix
-            instruccio = instruccio.replace("\r","\n")
+                # traslladem script via scp
+                completedScp = subprocess.run ("scp /tmp/ioctesterscript.sh isard@"+ip+
+                        ":/tmp/ioctesterscript.sh", shell=True, capture_output=True)
+                if completedScp.returncode!=0:
+                    # falla la transferència del script
+                    proves_fail += 1
+                    punts_fail += prova.pes
+                    superades.append("ERROR")
+                    resultat += "\t[ERROR scp "+completedScp.returncode+"] Probablement la teva màquina no es deixa accedir per SSH. Comprova que no hagis malmès l'usuari de connexió (isard).\n"
+                    # Guardem resultat a la BD
+                    intent.registre = resultat
+                    intent.save()
+                    continue
+                # si arribem aquí és que s'ha transferit el script per scp
+                instruccio = "ssh isard@"+ip+" bash /tmp/ioctesterscript.sh"
+                print(instruccio)
+
             # Executar comanda
             completedProc = subprocess.run( instruccio,
                                 shell=True, capture_output=True )
             #print(str(completedProc))
+
+            # Elininar scripts temporals
+            if prova.connexio_ssh:
+                # script local
+                completedRm = subprocess.run ("rm /tmp/ioctesterscript.sh",
+                                shell=True, capture_output=True)
+                if completedRm.returncode!=0:
+                    print("[WARNING] no s'ha pogut eliminar script local")
+                    resultat += "\t[WARNING] no s'ha pogut eliminar script local"
+                # script remot
+                completedRm = subprocess.run ("ssh isard@"+ip+" rm /tmp/ioctesterscript.sh",
+                                shell=True, capture_output=True)
+                if completedRm.returncode!=0:
+                    print("[WARNING] no s'ha pogut eliminar script remot")
+                    resultat += "\t[WARNING] no s'ha pogut eliminar script remnot"
 
             # Processar sortida de la comanda
             if completedProc.returncode==0:
