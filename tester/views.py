@@ -36,7 +36,7 @@ def executa_set(request,set_id):
             intent.save()
 
             # executem prova
-            ok, prova_msg = executa_prova(prova,ip,i)
+            ok, prova_msg = executa_prova(prova,ip,intent.id,i)
             if ok:
                 proves_ok += 1
                 punts_ok += prova.pes
@@ -81,28 +81,30 @@ def executa_set(request,set_id):
             "message":resultat + repr(e)
         })
 
-def executa_prova(prova,ip,iteracio):
+def executa_prova(prova,ip,intent_id,prova_num):
     missatge = ""
+    nom_arxiu = "/tmp/ioctesterscript_{}_{}.sh".format(intent_id,prova_num)
 
     # guardem script en arxiu temporal
     instruccio = prova.instruccio.replace("%IP",ip)
     script = instruccio.replace("\r","\n") # corregim salts de línia per a Unix
-    f = open("/tmp/ioctesterscript.sh", "w")
+    f = open(nom_arxiu, "w")
     f.write(script)
     f.close()
 
     # executem comanda
-    instruccio = "bash /tmp/ioctesterscript.sh"
+    instruccio = "bash {}".format(nom_arxiu)
     if prova.connexio_ssh:
         # traslladem script via scp
-        completedScp = subprocess.run ("scp /tmp/ioctesterscript.sh isard@"+ip+
-                ":/tmp/ioctesterscript.sh", shell=True, capture_output=True)
+        completedScp = subprocess.run ("scp {} isard@".format(nom_arxiu)+ip+
+                ":{}".format(nom_arxiu), shell=True, capture_output=True)
         if completedScp.returncode!=0:
             # falla la transferència del script
-            missatge += "\t[ERROR ssh "+str(completedScp.returncode)+"] Probablement la teva màquina no es deixa accedir per SSH. Comprova que no hagis malmès l'usuari de connexió (isard).\n"
+            missatge += "\t[ERROR ssh " + str(completedScp.returncode) + \
+                    "] Probablement la teva màquina no es deixa accedir per SSH. Comprova que no hagis malmès l'usuari de connexió (isard).\n"
             return False, missatge
         # si arribem aquí és que s'ha transferit OK l'script per scp
-        instruccio = "ssh isard@"+ip+" bash /tmp/ioctesterscript.sh"
+        instruccio = "ssh isard@"+ip+" bash {}".format(nom_arxiu)
 
     # Executar comanda
     completedProc = subprocess.run( instruccio,
@@ -110,29 +112,29 @@ def executa_prova(prova,ip,iteracio):
     #print(str(completedProc))
 
     # Elininar scripts temporals
+    # script local
+    completedRm = subprocess.run ("rm {}".format(nom_arxiu),
+                    shell=True, capture_output=True)
+    if completedRm.returncode!=0:
+        print("[WARNING] no s'ha pogut eliminar script servidor")
+        resultat += "\t[WARNING] no s'ha pogut eliminar script servidor"
     if prova.connexio_ssh:
-        # script local
-        completedRm = subprocess.run ("rm /tmp/ioctesterscript.sh",
+        # script remot (client)
+        completedRm = subprocess.run ("ssh isard@"+ip+" rm {}".format(nom_arxiu),
                         shell=True, capture_output=True)
         if completedRm.returncode!=0:
-            print("[WARNING] no s'ha pogut eliminar script local")
-            resultat += "\t[WARNING] no s'ha pogut eliminar script local"
-        # script remot
-        completedRm = subprocess.run ("ssh isard@"+ip+" rm /tmp/ioctesterscript.sh",
-                        shell=True, capture_output=True)
-        if completedRm.returncode!=0:
-            print("[WARNING] no s'ha pogut eliminar script remot")
-            resultat += "\t[WARNING] no s'ha pogut eliminar script remnot"
+            print("[WARNING] no s'ha pogut eliminar script client")
+            resultat += "\t[WARNING] no s'ha pogut eliminar script client"
 
     # Processar sortida de la comanda
     if completedProc.returncode==0:
         missatge +="[SUCCESS]\n{}\n[SUCCESS] Prova {} - {}\n".format(
-            completedProc.stdout.decode("utf-8"),iteracio-1,prova.nom)
+            completedProc.stdout.decode("utf-8"),prova_num-1,prova.nom)
         return True, missatge
     
     # si arribem aquí es que ha fallat l'execució
-    missatge += "[FAIL] exit code = {}\n\t{}\n[FAIL]\n".format(
-        completedProc.returncode, completedProc.stderr.decode("utf-8") )
+    missatge += "[FAIL] exit code = {}\n\t{}\n[FAIL] Prova {} - {}\n".format(
+        completedProc.returncode, completedProc.stderr.decode("utf-8"),prova_num,prova.nom )
     if prova.connexio_ssh and completedProc.returncode==255:
         missatge += "\tProbablement la teva màquina no es deixa accedir per SSH. Comprova que no hagis malmès l'usuari de connexió (isard).\n"
     return False, missatge
