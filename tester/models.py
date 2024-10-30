@@ -50,7 +50,7 @@ class Prova(models.Model):
     anotacions = models.TextField(null=True,blank=True,
                 help_text="Anotacions privades per al professorat.")
     script = models.TextField(
-                help_text='"Comanda" o instrucció a executar.')
+                help_text='Instruccions a executar. Veure "tipus" per seleccionar el llenguatge. Utilitza %IP per la IP del client.')
     connexio_ssh = models.BooleanField(default=True,
                 help_text="DEPRECATED, no utilitzar. Veure TIPUS en el seu lloc.")
     pes = models.FloatField(default=1.0);
