@@ -109,7 +109,7 @@ def executa_prova(prova,ip,intent_id,prova_num):
     elif prova.tipus=="BASHSRV":
         instruccio = "bash {}".format(nom_arxiu)
     elif prova.tipus=="SELESRV":
-        instruccio = "cd /tmp; MOZ_HEADLESS=1 node {}".format(nom_arxiu)
+        instruccio = "cd /tmp; whoami; MOZ_HEADLESS=1 node {}".format(nom_arxiu)
     else:
         missatge += "[ERROR] Error intern del tipus de prova.\n"
         return False, missatge
