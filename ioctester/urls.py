@@ -28,6 +28,9 @@ urlpatterns = [
     path('', views.index),
     path('admin/', admin.site.urls),
     path('accounts/', include('allauth.urls')),
-    path('api/executa_set/<int:set_id>', views.executa_set),
+    path('api/executa_set/<int:set_id>', views.api_executa_set),
+    path('api/executa_set_chunked/<int:set_id>', views.api_executa_set_chunked),
+    path('prova_chunk/', views.prova_chunk),
+    path('chunked_api/', views.chunked_api),
 ]
 

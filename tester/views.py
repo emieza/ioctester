@@ -1,16 +1,140 @@
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse, StreamingHttpResponse
 
-import subprocess, sys, os
+import subprocess, sys, os, time, json
 from .models import *
 
 def index(request):
     sets = Set.objects.filter(actiu=True)
     return render( request, "index.html", {"sets":sets} )
 
+def chunked_api(request):
+    def dades():
+        #yield "["
+        for i in range(1,5):
+            yield json.dumps({ "status":"OK", "message":"prova \nmissatge "+str(i) })
+            yield "\n"
+            time.sleep(1)
+
+        #yield "]"
+
+    return StreamingHttpResponse( dades() )
+
 @login_required
-def executa_set(request,set_id):
+def prova_chunk(request):
+    return render(request, "chunks.html" )
+
+
+@login_required
+def api_executa_set_chunked(request, set_id):
+    def dades():
+        try:
+            registre = ""
+            ip = get_client_ip(request)
+            myset = Set.objects.get(id=set_id)
+            intent = Intent( set=myset, alumne=request.user,
+                                ip=ip, registre=registre )
+            intent.registre = ""
+            intent.save()
+
+            # enviem capçalera de les proves al client
+            yield json.dumps({
+                "type":"cap", "ip":ip, "set_id":set_id,
+                "user":request.user.username, "intent_id": intent.id})
+            yield "\n"
+
+            i = 1
+            punts_ok = 0
+            punts_fail = 0
+            proves_ok = 0
+            proves_fail = 0
+            total = myset.prova_set.filter(activa=True).count()
+            superades = []
+            # Iterem llista de Proves dins el Set
+            for prova in myset.prova_set.filter(activa=True):
+                resultat_prova = {"type":"prova", "index":i, "total":total,
+                        "nom":prova.nom, "tipus_prova":prova.tipus,
+                        "pes":prova.pes }
+
+                # executem prova
+                ok, prova_msg = executa_prova(prova,ip,intent.id,i)
+                if ok:
+                    proves_ok += 1
+                    punts_ok += prova.pes
+                    superades.append("OK")
+                    resultat_prova["resultat"] = "OK"
+                else:
+                    proves_fail += 1
+                    punts_fail += prova.pes
+                    superades.append("ERROR")
+                    resultat_prova["resultat"] = "ERROR"
+
+                # Guardem resultat a la BD
+                registre += "\n---------------------------------------------------------------------------\n"
+                resultat_prova["message"] = prova_msg
+                registre += json.dumps(resultat_prova, indent=4)
+                registre += "\nMISSATGE PROVA id=" + str(prova.id)
+                registre += "\n" + prova_msg
+                intent.registre = registre
+                intent.save()
+                # enviem chunk de resultat al client
+                yield json.dumps(resultat_prova)
+                yield "\n"
+                # index
+                i += 1
+
+            # Processar resultat en %
+            intent.resultat = punts_ok*100/(punts_ok+punts_fail)
+            resum = { "type":"resum", "percentatge": intent.resultat,
+                    "punts_ok": punts_ok,  "punts_fail": punts_fail,
+                    "proves_ok": proves_ok,"proves_fail": proves_fail,
+                    "proves": []
+            }
+            # registre a la BD
+            registre += "\n---------------------------------------------------------------------------\n"
+            registre += "[RESUM] Intent id {}\n".format(intent.id)
+            
+            # Resum de cada prova
+            i = 1            
+            for prova in myset.prova_set.filter(activa=True):
+                resum["proves"].append( {"index":i, "pes":prova.pes,
+                    "resultat":superades[i-1], "nom":prova.nom })
+                registre += "\t[Prova {}/{} - {} punts] {} - {}\n".format(i,
+                                total, prova.pes, superades[i-1], prova.nom )
+                i += 1
+
+            # enviem resum al client
+            yield json.dumps(resum)
+            yield "\n"
+
+            # guardem a la BD el resum enviat al client
+            registre += "[RESUM] Intent id {}\n".format(intent.id)
+            registre += "\tProves exitoses: {}/{}. Resultat = {} %\n".format(
+                            proves_ok,proves_ok+proves_fail,intent.resultat)
+            registre += json.dumps( resum, indent=4 )
+            intent.registre = registre
+            intent.save()
+
+            # finalitzar connexió client
+            tancament = {"type":"final"}
+            yield json.dumps(tancament)
+            yield "\n"
+        except Exception as e:
+            exc_type, exc_obj, exc_tb = sys.exc_info()
+            print(exc_type, exc_tb.tb_lineno)
+            print("ERROR "+repr(e)+"\nError en línia "+str(exc_tb.tb_lineno))
+            yield json.dumps({
+                "status":"ERROR",
+                "message":repr(e)
+            })
+            yield "\n"
+
+    return StreamingHttpResponse( dades() )
+
+
+@login_required
+def api_executa_set(request,set_id):
     ip = get_client_ip(request)
     resultat = "---------------------------------------------------------------------------\n"
     resultat += "Iniciant set de proves {} per a usuari {} en IP={}\n".format(
@@ -50,6 +174,9 @@ def executa_set(request,set_id):
             intent.registre = resultat
             intent.save()
             i += 1
+
+            # TEST
+            #time.sleep(2)
 
         # Processar resultat en %
         intent.resultat = punts_ok*100/(punts_ok+punts_fail)

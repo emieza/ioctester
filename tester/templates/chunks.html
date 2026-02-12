@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>IOC Autotest</title>
+	<style type="text/css">
+		.header {
+			background-color: #ccc;
+			padding: 1em;
+			margin: 0em;
+			border-collapse: collapse;
+			font-family: 'sans-serif';
+			font-weight: bold;
+		}
+		.userbox {
+			float: right;
+			font-family: 'serif';
+			font-weight: normal;
+		}
+		#resultat[disabled] {
+			color: blue;
+		}
+		#progressbarbox {
+			display: inline-block;
+			width: 240px;
+			height: 1em;
+			background-color: #ddd;
+		}
+		#progressbar {
+			display: inline-block;
+			width: 0;
+			height: 1em;
+			background-color: grey;
+		}
+	</style>
+	<script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+	<script type="text/javascript">
+		function canvia_set() {
+			if( parseInt($("#set").val()) )
+				$("#go").prop("disabled",false);
+			else
+				$("#go").prop("disabled",true);
+		}
+
+		var progres = 1;
+		function progressa() {
+			$("#progressbar").width(progres)
+			progres += 1;
+		}
+
+		function executa_set() {
+			// engeguem barra de progrés
+			progres = 1;
+			var timer = setInterval(progressa,500);
+
+			processarAPINDJSON("/api/executa_set_chunked/10");
+		}
+		function neteja() {
+			$("textarea").val("");
+		}
+
+		// NDJSON = NewLine Delimited JSON
+		async function processarAPINDJSON(url) {
+		  try {
+		    const response = await fetch(url);
+		    const reader = response.body
+		      .pipeThrough(new TextDecoderStream())
+		      .getReader();
+		    
+		    let buffer = '';
+		    let lineCount = 0;
+		    
+		    while (true) {
+		      const { value, done } = await reader.read();
+		      if (done) break;
+		      
+		      buffer += value;
+		      
+		      // Processar línia per línia
+		      const lines = buffer.split('\n');
+		      buffer = lines.pop() || ''; // Última línia incompleta
+		      
+		      for (const line of lines) {
+		        if (line.trim()) {
+		          try {
+		            const element = JSON.parse(line);
+		            processarElementNDJSON(element, lineCount++);
+		          } catch (e) {
+		            console.error('Error en línia:', e);
+		          }
+		        }
+		      }
+		    }
+		  } catch (error) {
+		    console.error('Error:', error);
+		  }
+		}
+
+		function processarElementNDJSON(element, index) {
+		  // Processament NO bloquejant
+		  queueMicrotask(() => {
+		  	var textarea = document.getElementById("resultat");
+
+		  	switch( element.type ) {
+		  		case "cap":
+					textarea.value += `INTENT DE PROVES ${element.intent_id}\n`
+					textarea.value += "\tIP del client:" + element.ip + "\n"
+					textarea.value += "\tSet ID:" + element.set_id + "\n"
+					textarea.value += "\tUsuari:" + element.user + "\n\n"
+		  			break;
+		  		case "prova":
+		  			textarea.value += "PROVA \n\n";
+		  			textarea.value += element.message;
+		  			break;
+		  		case "resum":
+		  			textarea.value += "RESUM\n\n";
+		  			break;
+		  		case "final":
+		  			textarea.value += "FINAL INTENT DE PROVES\n\n"
+		  			// tancar progress bar
+		  			break;
+
+		  	}
+		    console.log(`📄 Línia ${index}:`, element);
+		  });
+		}
+	</script>
+</head>
+<body>
+
+	<div class="header">
+		Proves de missatges chunked
+		<span class="userbox">proves</span>
+	</div>
+
+	<button id="go" onclick="executa_set()">Executa el set de proves</button>
+
+	<button onclick="neteja()">Neteja</button>
+	<span id="progressbarbox">
+		<span id="progressbar"></span>
+	</span>
+
+	<br>
+
+	<div id="missatges"></div>
+
+	<h2>Resultat de les proves</h2>
+	<textarea style="width:100%" cols="80" rows="25" id="resultat" disabled></textarea>
+
+
+</body>
+</html>
