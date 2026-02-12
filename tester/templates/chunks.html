@@ -104,17 +104,27 @@
 
 		  	switch( element.type ) {
 		  		case "cap":
-					textarea.value += `INTENT DE PROVES ${element.intent_id}\n`
+		  			textarea.value += "==============================================================\n";
+					textarea.value += `INTENT DE PROVES id=${element.intent_id}\n`
 					textarea.value += "\tIP del client:" + element.ip + "\n"
 					textarea.value += "\tSet ID:" + element.set_id + "\n"
 					textarea.value += "\tUsuari:" + element.user + "\n\n"
 		  			break;
 		  		case "prova":
-		  			textarea.value += "PROVA \n\n";
-		  			textarea.value += element.message;
+		  			textarea.value += "---------------------------------------------------------------\n";
+		  			textarea.value += `PROVA ${element.index}/${element.total}: ${element.nom}\n`;
+		  			textarea.value += `\tTipus de prova: ${element.tipus}\n`;
+		  			textarea.value += `\tResultat: ${element.resultat}\n`;
+		  			textarea.value += element.message + "\n";
 		  			break;
 		  		case "resum":
-		  			textarea.value += "RESUM\n\n";
+		  			textarea.value += "---------------------------------------------------------------\n";
+		  			textarea.value += "RESUM:\n";
+		  			textarea.value += `Intent id: ${element.intent_id}\n`;
+		  			textarea.value += `Puntuació total: ${element.percentatge}\n`;
+		  			for( const prova of element.proves ) {
+		  				textarea.value += `\t${prova.index}. [${prova.resultat}] (${prova.pes} punts) ${prova.nom}\n`;
+		  			}
 		  			break;
 		  		case "final":
 		  			textarea.value += "FINAL INTENT DE PROVES\n\n"

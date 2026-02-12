@@ -89,7 +89,7 @@ def api_executa_set_chunked(request, set_id):
             resum = { "type":"resum", "percentatge": intent.resultat,
                     "punts_ok": punts_ok,  "punts_fail": punts_fail,
                     "proves_ok": proves_ok,"proves_fail": proves_fail,
-                    "proves": []
+                    "intent_id":intent.id, "proves": []
             }
             # registre a la BD
             registre += "\n---------------------------------------------------------------------------\n"
