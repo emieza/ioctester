@@ -44,6 +44,7 @@
 		}
 
 		var progres = 1;
+		var timer = null;
 		function progressa() {
 			$("#progressbar").width(progres)
 			progres += 1;
@@ -52,9 +53,11 @@
 		function executa_set() {
 			// engeguem barra de progrés
 			progres = 1;
-			var timer = setInterval(progressa,500);
-
-			processarAPINDJSON("/api/executa_set_chunked/10");
+			timer = setInterval(progressa,500);
+			// trobem set id
+			var set_id = document.getElementById("set").value;
+			console.log("Iniciant proves. Set ID="+set_id);
+			processarAPINDJSON(`/api/executa_set_chunked/${set_id}`);
 		}
 		function neteja() {
 			$("textarea").val("");
@@ -128,12 +131,25 @@
 		  			break;
 		  		case "final":
 		  			textarea.value += "FINAL INTENT DE PROVES\n\n"
+					// fer scroll al final del textarea
+					//textarea.scrollTop = textarea.scrollHeight - textarea.clientHeight;
 		  			// tancar progress bar
+		  			clearInterval(timer);
+					progres = 0;
+					progressa();
+					// notificar final de proves
+					setTimeout( mostra_final, 100);
 		  			break;
-
 		  	}
+			// fer scroll al final del textarea
+			textarea.scrollTop = textarea.scrollHeight - textarea.clientHeight;
+
 		    console.log(`📄 Línia ${index}:`, element);
 		  });
+		}
+
+		function mostra_final() {
+			alert("Proves executades. Comprova els resultats.");
 		}
 	</script>
 </head>
@@ -144,7 +160,15 @@
 		<span class="userbox">proves</span>
 	</div>
 
-	<button id="go" onclick="executa_set()">Executa el set de proves</button>
+	<p>Selecciona un set de proves a executar:</p>
+	<select id="set" onchange="canvia_set()">
+		<option>Selecciona un set de proves a executar...</option>
+		{% for set in sets %}
+			<option value="{{set.id}}">{{set}}</option>
+		{% endfor %}
+	</select>
+
+	<button disabled id="go" onclick="executa_set()">Executa el set de proves</button>
 
 	<button onclick="neteja()">Neteja</button>
 	<span id="progressbarbox">
