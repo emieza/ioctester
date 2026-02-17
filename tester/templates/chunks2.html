@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>IOC Autotest - Materialize</title>
+	<!-- Materialize CSS -->
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+	<!-- Material Icons -->
+	<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+	<style type="text/css">
+		.header {
+			background-color: #26a69a;
+			color: white;
+			padding: 1.5em;
+			margin-bottom: 2em;
+			border-radius: 0 0 4px 4px;
+		}
+		.userbox {
+			float: right;
+			font-weight: 300;
+		}
+		#progressbarbox {
+			display: inline-block;
+			width: 240px;
+			height: 1.5em;
+			background-color: #e0e0e0;
+			border-radius: 2px;
+			margin-left: 20px;
+		}
+		#progressbar {
+			display: inline-block;
+			width: 0;
+			height: 1.5em;
+			background-color: #26a69a;
+			border-radius: 2px;
+			transition: width 0.3s ease;
+		}
+		.card-header {
+			background-color: #f5f5f5;
+			padding: 10px;
+			margin: -20px -20px 20px -20px;
+			border-radius: 4px 4px 0 0;
+			font-weight: 500;
+		}
+		.result-badge {
+			padding: 4px 8px;
+			border-radius: 3px;
+			color: white;
+			font-size: 0.8em;
+			font-weight: 500;
+			display: inline-block;
+		}
+		.badge-exit { background-color: #9e9e9e; }
+		.badge-ok { background-color: #4caf50; }
+		.badge-fail { background-color: #f44336; }
+		.badge-warning { background-color: #ff9800; }
+		.prova-item {
+			border-left: 3px solid #26a69a;
+			padding-left: 15px;
+			margin-bottom: 15px;
+			background-color: #fafafa;
+			padding: 10px;
+			border-radius: 0 4px 4px 0;
+		}
+		.timestamp {
+			color: #9e9e9e;
+			font-size: 0.8em;
+			margin-top: 10px;
+			text-align: right;
+		}
+		#resultats-container {
+			max-height: 600px;
+			overflow-y: auto;
+			padding: 10px;
+		}
+		.detail-btn {
+			margin-top: 10px;
+			width: 100%;
+		}
+		.modal-message {
+			background-color: #f5f5f5;
+			padding: 20px;
+			border-radius: 4px;
+			font-family: monospace;
+			white-space: pre-wrap;
+			max-height: 400px;
+			overflow-y: auto;
+		}
+	</style>
+	<script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+	<!-- Materialize JS -->
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+	<script type="text/javascript">
+		function canvia_set() {
+			if( parseInt($("#set").val()) )
+				$("#go").prop("disabled",false);
+			else
+				$("#go").prop("disabled",true);
+		}
+
+		var progres = 1;
+		var timer = null;
+		var modalCounter = 0; // Per identificar modals únics
+		
+		function progressa() {
+			$("#progressbar").width(progres + "px");
+			progres += 1;
+		}
+
+		function executa_set() {
+			// Netejar resultats anteriors
+			$("#resultats-container").empty();
+			
+			// engeguem barra de progrés
+			progres = 1;
+			timer = setInterval(progressa,500);
+			
+			// trobem set id
+			var set_id = document.getElementById("set").value;
+			console.log("Iniciant proves. Set ID="+set_id);
+			processarAPINDJSON(`/api/executa_set_chunked/${set_id}`);
+		}
+		
+		function neteja() {
+			$("#resultats-container").empty();
+		}
+
+		function formatTimestamp() {
+			const now = new Date();
+			return now.toLocaleTimeString('ca-ES', { 
+				hour: '2-digit', 
+				minute: '2-digit', 
+				second: '2-digit',
+				hour12: false 
+			});
+		}
+
+		function obrirModal(message, titol) {
+			const modalId = `modal-${Date.now()}-${modalCounter++}`;
+			
+			// Crear l'estructura del modal
+			const modalHTML = `
+				<div id="${modalId}" class="modal">
+					<div class="modal-content">
+						<h4>${titol}</h4>
+						<div class="modal-message">${message.replace(/\n/g, '<br>')}</div>
+					</div>
+					<div class="modal-footer">
+						<a href="#!" class="modal-close waves-effect waves-green btn-flat">Tancar</a>
+					</div>
+				</div>
+			`;
+			
+			// Afegir modal al body
+			$('body').append(modalHTML);
+			
+			// Inicialitzar i obrir modal
+			const modalElem = document.getElementById(modalId);
+			const modal = M.Modal.init(modalElem, {
+				onCloseEnd: function() {
+					// Eliminar modal del DOM quan es tanqui
+					$(modalElem).remove();
+				}
+			});
+			modal.open();
+		}
+
+		function crearTargeta(element) {
+			const timestamp = formatTimestamp();
+			let cardContent = '';
+			let icon = '';
+			let colorClass = '';
+
+			switch(element.type) {
+				case "cap":
+					icon = 'play_arrow';
+					colorClass = 'blue lighten-5';
+					cardContent = `
+						<div class="card-header">
+							<i class="material-icons left">${icon}</i>
+							<span style="font-size: 1.2em;">INICI DE PROVES</span>
+						</div>
+						<div class="row" style="margin-bottom: 0;">
+							<div class="col s12 m6">
+								<p><i class="material-icons tiny">assignment_ind</i> <strong>Intent ID:</strong> ${element.intent_id}</p>
+								<p><i class="material-icons tiny">computer</i> <strong>IP Client:</strong> ${element.ip}</p>
+							</div>
+							<div class="col s12 m6">
+								<p><i class="material-icons tiny">settings</i> <strong>Set ID:</strong> ${element.set_id}</p>
+								<p><i class="material-icons tiny">person</i> <strong>Usuari:</strong> ${element.user}</p>
+							</div>
+						</div>
+					`;
+					break;
+					
+				case "prova":
+					let badgeClass = 'badge-';
+					let resultatIcon = '';
+					switch(element.resultat) {
+						case 'OK':
+							badgeClass += 'ok';
+							resultatIcon = 'check_circle';
+							break;
+						case 'FAIL':
+							badgeClass += 'fail';
+							resultatIcon = 'error';
+							break;
+						default:
+							badgeClass += 'warning';
+							resultatIcon = 'warning';
+					}
+					
+					cardContent = `
+						<div class="card-header">
+							<i class="material-icons left">science</i>
+							<span style="font-size: 1.1em;">PROVA ${element.index}/${element.total}</span>
+						</div>
+						<div class="prova-item">
+							<h6 style="margin-top: 0; font-weight: 500;">${element.nom}</h6>
+							<div class="chip" style="margin-right: 10px;">
+								<i class="material-icons tiny left">category</i>${element.tipus}
+							</div>
+							<span class="result-badge ${badgeClass}">
+								<i class="material-icons tiny" style="vertical-align: middle;">${resultatIcon}</i>
+								${element.resultat}
+							</span>
+							${element.message ? `
+								<button class="btn-small waves-effect waves-light teal lighten-1 detail-btn" onclick='obrirModal(${JSON.stringify(element.message).replace(/'/g, "&apos;")}, "Detalls de la prova: ${element.nom}")'>
+									<i class="material-icons left">info</i>Veure detalls
+								</button>
+							` : ''}
+						</div>
+					`;
+					break;
+					
+				case "resum":
+					cardContent = `
+						<div class="card-header">
+							<i class="material-icons left">assessment</i>
+							<span style="font-size: 1.2em;">RESUM FINAL</span>
+						</div>
+						<div class="row">
+							<div class="col s12">
+								<p><strong>Intent ID:</strong> ${element.intent_id}</p>
+								<div class="progress" style="height: 25px; border-radius: 4px;">
+									<div class="determinate" style="width: ${element.percentatge}%; background-color: #26a69a;">
+										<span style="color: white; line-height: 25px; padding-left: 10px;">${element.percentatge}%</span>
+									</div>
+								</div>
+							</div>
+						</div>
+						<ul class="collection" style="margin-top: 10px;">
+							${element.proves.map(prova => {
+								let iconClass = prova.resultat === 'OK' ? 'check_circle green-text' : 'error red-text';
+								return `
+									<li class="collection-item">
+										<i class="material-icons left ${iconClass}">${prova.resultat === 'OK' ? 'check_circle' : 'error'}</i>
+										<span class="title"><strong>${prova.index}. ${prova.nom}</strong></span>
+										<p class="grey-text">${prova.pes} punts</p>
+									</li>
+								`;
+							}).join('')}
+						</ul>
+					`;
+					break;
+					
+				case "final":
+					icon = 'stop';
+					colorClass = 'grey lighten-3';
+					cardContent = `
+						<div class="card-header">
+							<i class="material-icons left">stop</i>
+							<span style="font-size: 1.2em;">FINAL DE PROVES</span>
+						</div>
+						<div class="center-align" style="padding: 20px;">
+							<i class="material-icons" style="font-size: 48px; color: #9e9e9e;">check_circle_outline</i>
+							<p style="font-size: 1.1em; margin-top: 10px;">Procés completat</p>
+						</div>
+					`;
+					
+					// tancar progress bar
+					clearInterval(timer);
+					progres = 0;
+					progressa();
+					
+					// mostrar notificació
+					M.toast({html: 'Proves completades!', classes: 'rounded green'});
+					break;
+			}
+
+			return `
+				<div class="col s12 m6 l4">
+					<div class="card ${colorClass} hoverable" style="margin-bottom: 20px;">
+						<div class="card-content">
+							${cardContent}
+							<div class="timestamp">
+								<i class="material-icons tiny">access_time</i> ${timestamp}
+							</div>
+						</div>
+					</div>
+				</div>
+			`;
+		}
+
+		// NDJSON = NewLine Delimited JSON
+		async function processarAPINDJSON(url) {
+		  try {
+		    const response = await fetch(url);
+		    const reader = response.body
+		      .pipeThrough(new TextDecoderStream())
+		      .getReader();
+		    
+		    let buffer = '';
+		    let lineCount = 0;
+		    
+		    while (true) {
+		      const { value, done } = await reader.read();
+		      if (done) break;
+		      
+		      buffer += value;
+		      
+		      // Processar línia per línia
+		      const lines = buffer.split('\n');
+		      buffer = lines.pop() || ''; // Última línia incompleta
+		      
+		      for (const line of lines) {
+		        if (line.trim()) {
+		          try {
+		            const element = JSON.parse(line);
+		            processarElementNDJSON(element, lineCount++);
+		          } catch (e) {
+		            console.error('Error en línia:', e);
+		          }
+		        }
+		      }
+		    }
+		  } catch (error) {
+		    console.error('Error:', error);
+		    M.toast({html: 'Error en la connexió', classes: 'rounded red'});
+		  }
+		}
+
+		function processarElementNDJSON(element, index) {
+		  // Processament NO bloquejant
+		  queueMicrotask(() => {
+			const container = document.getElementById("resultats-container");
+			const card = crearTargeta(element);
+			
+			// Afegir la nova targeta al principi per veure les últimes primeres
+			$(container).prepend(card);
+			
+			// Fer scroll al principi per veure les noves targetes
+			container.scrollTop = 0;
+
+		    console.log(`📄 Línia ${index}:`, element);
+		  });
+		}
+	</script>
+</head>
+<body>
+
+	<div class="header">
+		<div class="row" style="margin-bottom: 0;">
+			<div class="col s6">
+				<h4 style="margin: 0;"><i class="material-icons left">cloud_queue</i> Proves de missatges chunked</h4>
+			</div>
+			<div class="col s6">
+				<span class="userbox"><i class="material-icons left">account_circle</i> proves</span>
+			</div>
+		</div>
+	</div>
+
+	<div class="container-fluid" style="padding: 0 20px;">
+		<div class="row">
+			<div class="col s12">
+				<div class="card-panel grey lighten-4" style="margin-bottom: 20px;">
+					<div class="row" style="margin-bottom: 0;">
+						<div class="col s12 m4">
+							<p>Selecciona un set de proves a executar:</p>
+							<select id="set" onchange="canvia_set()" class="browser-default">
+								<option>Selecciona un set de proves a executar...</option>
+								{% for set in sets %}
+									<option value="{{set.id}}">{{set}}</option>
+								{% endfor %}
+							</select>
+						</div>
+						<div class="col s12 m8" style="padding-top: 24px;">
+							<button disabled id="go" onclick="executa_set()" class="btn waves-effect waves-light teal">
+								<i class="material-icons left">play_arrow</i> Executa
+							</button>
+							
+							<button onclick="neteja()" class="btn waves-effect waves-light grey">
+								<i class="material-icons left">delete_sweep</i> Neteja
+							</button>
+							
+							<span id="progressbarbox">
+								<span id="progressbar"></span>
+							</span>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<h5><i class="material-icons left" style="margin-right: 10px;">dashboard</i> Resultat de les proves</h5>
+		
+		<div id="resultats-container" class="row" style="margin-top: 20px;">
+			<!-- Les targetes s'afegiran aquí dinàmicament -->
+			<div class="col s12 center-align grey-text" style="padding: 50px;">
+				<i class="material-icons" style="font-size: 64px;">info_outline</i>
+				<p>Selecciona un set de proves i executa'l per veure els resultats</p>
+			</div>
+		</div>
+	</div>
+
+</body>
+</html>

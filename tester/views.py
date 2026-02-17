@@ -24,7 +24,7 @@ def chunked_api(request):
 @login_required
 def prova_chunk(request):
     sets = Set.objects.filter(actiu=True)
-    return render( request, "chunks.html", {"sets":sets} )
+    return render( request, "chunks2.html", {"sets":sets} )
 
 @login_required
 def api_executa_set_chunked(request, set_id):
