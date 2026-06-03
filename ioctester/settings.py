@@ -109,6 +109,9 @@ ACCOUNT_ADAPTER = 'tester.adapters.CustomAccountAdapter'
 SOCIALACCOUNT_ADAPTER = 'tester.adapters.CustomSocialAccountAdapter'
 ALLOWED_GOOGLE_DOMAINS = env.list("ALLOWED_GOOGLE_DOMAINS")
 
+ISARD_API_TOKEN = env("ISARD_API_TOKEN")
+
+
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 

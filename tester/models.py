@@ -71,6 +71,9 @@ class Intent(models.Model):
     registre = models.TextField()
     data = models.DateTimeField(auto_now=True)
     ip = models.CharField(max_length=15)
+    mac = models.CharField(max_length=17,null=True)
+    isard_user_id = models.CharField(max_length=100,null=True)
+    isard_username = models.CharField(max_length=100,null=True)
     anotacions_alumne = models.TextField(null=True,blank=True,
                 help_text="Anotacions i feedback de l'alumnat.")
     anotacions_docent = models.TextField(null=True,blank=True,
