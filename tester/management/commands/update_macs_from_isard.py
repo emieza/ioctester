@@ -93,7 +93,7 @@ class Command(BaseCommand):
         # Amb les Macs actualitzades, revisem els Intents
         data = timezone.now() - timedelta(hours=12)
         # TODO: filtrar 12h enrera ,data__lt=data ??
-        for intent in Intent.objects.filter(nom_usuari_isard=None,mac_isnull=False):
+        for intent in Intent.objects.filter(nom_usuari_isard=None,mac__isnull=False):
             interf = InterficieVM.objects.filter(mac=intent.mac).first()
             if interf:
                 intent.nom_usuari_isard = interf.nom_usuari_isard
