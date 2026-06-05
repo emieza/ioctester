@@ -12,13 +12,16 @@ def index(request):
 @login_required
 def executa_set(request,set_id):
     ip = get_client_ip(request)
+    mac = get_client_mac(ip)
+    isard_user_id, isard_username = get_isard_data(mac)
+
     resultat = "---------------------------------------------------------------------------\n"
     resultat += "Iniciant set de proves {} per a usuari {} en IP={}\n".format(
                     set_id, request.user, ip)
     try:
         myset = Set.objects.get(id=set_id)
-        intent = Intent( set=myset, alumne=request.user,
-                            ip=ip, registre=resultat )
+        intent = Intent( set=myset, alumne=request.user, ip=ip, registre=resultat,
+                    isard_user_id=isard_user_id, isard_username=isard_username )
         i = 1
         punts_ok = 0
         punts_fail = 0
@@ -160,3 +163,8 @@ def get_client_ip(request):
         ip = request.META.get('REMOTE_ADDR')
     return ip
 
+def get_client_mac(ip):
+    return None
+
+def get_isard_data(mac):
+    return None, None

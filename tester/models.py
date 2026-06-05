@@ -72,8 +72,8 @@ class Intent(models.Model):
     data = models.DateTimeField(auto_now=True)
     ip = models.CharField(max_length=15)
     mac = models.CharField(max_length=17,null=True)
-    isard_user_id = models.CharField(max_length=100,null=True)
-    isard_username = models.CharField(max_length=100,null=True)
+    usuari_isard_id = models.CharField(max_length=100,null=True)
+    nom_usuari_isard = models.CharField(max_length=100,null=True)
     anotacions_alumne = models.TextField(null=True,blank=True,
                 help_text="Anotacions i feedback de l'alumnat.")
     anotacions_docent = models.TextField(null=True,blank=True,
@@ -85,3 +85,11 @@ class Intent(models.Model):
         return "{} {} ({})".format( self.alumne.first_name,
                 self.alumne.last_name, self.alumne.email)
 
+class InterficieVM(models.Model):
+    mac = models.CharField(max_length=17,null=True,unique=True)
+    nom_escriptori = models.CharField(max_length=17,null=True)
+    usuari_isard_id = models.CharField(max_length=100,null=True)
+    nom_usuari_isard = models.CharField(max_length=100,null=True)
+    compte = models.IntegerField(default=1,help_text="Si aquest valor és >1 vol dir que s'ha reptetit una mac en algun moment donat. Es registraran les dades finals, no les originals.")
+    dades = models.TextField(null=True,blank=True)
+    actualitzat = models.DateTimeField(auto_now=True)
