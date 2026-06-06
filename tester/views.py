@@ -20,7 +20,7 @@ def executa_set(request,set_id):
                     set_id, request.user, ip)
     try:
         myset = Set.objects.get(id=set_id)
-        intent = Intent( set=myset, alumne=request.user, ip=ip, registre=resultat,
+        intent = Intent( set=myset, alumne=request.user, ip=ip, registre=resultat, mac=mac,
                     isard_user_id=isard_user_id, isard_username=isard_username )
         i = 1
         punts_ok = 0
@@ -164,7 +164,22 @@ def get_client_ip(request):
     return ip
 
 def get_client_mac(ip):
+    # Aconseguim adreça Mac del client
+    instruccio = "ip neigh show {} | awk '{print $5}'"
+    # Executar comanda
+    try:
+        completedProc = subprocess.run( instruccio,
+                            shell=True, capture_output=True )
+        # Processar sortida de la comanda
+        if completedProc.returncode==0:
+            mac = completedProc.stdout.decode("utf-8").trim()
+            return mac
+    except Exception as e:
+        print("ERROR accedint a l'adreça Mac: "+str(e))
+        pass
+    # si alguna cosa no va bé, retornem None (null)
     return None
 
 def get_isard_data(mac):
+    # TODO
     return None, None
