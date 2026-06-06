@@ -24,6 +24,10 @@ class Command(BaseCommand):
         # USUARIS
         resposta = requests.get('https://elmeuescriptori.gestioeducativa.gencat.cat/api/v3/admin/users',
                                 headers=headers)
+        if resposta.status_code != 200:
+            #print("ERROR d'accés a l'API: el ISARD_API_TOKEN és probablement incorrecte.")
+            raise CommandError("ERROR d'accés a l'API: el ISARD_API_TOKEN és probablement incorrecte.")
+
         macs = {}
 
         # iterate users

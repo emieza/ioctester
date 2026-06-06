@@ -87,7 +87,7 @@ class Intent(models.Model):
 
 class InterficieVM(models.Model):
     mac = models.CharField(max_length=17,null=True,unique=True)
-    nom_escriptori = models.CharField(max_length=17,null=True)
+    nom_escriptori = models.CharField(max_length=100,null=True)
     usuari_isard_id = models.CharField(max_length=100,null=True)
     nom_usuari_isard = models.CharField(max_length=100,null=True)
     compte = models.IntegerField(default=1,help_text="Si aquest valor és >1 vol dir que s'ha reptetit una mac en algun moment donat. Es registraran les dades finals, no les originals.")
