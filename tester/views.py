@@ -36,7 +36,8 @@ def executa_set(request,set_id):
     try:
         myset = Set.objects.get(id=set_id)
         intent = Intent( set=myset, alumne=request.user, ip=ip, registre=resultat, mac=mac,
-                    isard_user_id=isard_user_id, isard_username=isard_username )
+                    usuari_isard_id=interf.usuari_isard_id, 
+                    nom_usuari_isard=interf.nom_usuari_isard )
         i = 1
         punts_ok = 0
         punts_fail = 0
@@ -182,25 +183,23 @@ def get_client_mac(ip):
     # PROVA : TODO : esborrar o comentar
     #return "52:54:00:32:2a:fd"
     # Aconseguim adreça Mac del client
-    instruccio = "ip neigh show {} | awk '{print $5}'"
+    instruccio = "ip neigh show "+ip+" | awk '{print $5}'"
     # Executar comanda
     try:
         completedProc = subprocess.run( instruccio,
                             shell=True, capture_output=True )
         # Processar sortida de la comanda
         if completedProc.returncode==0:
-            mac = completedProc.stdout.decode("utf-8").trim()
+            mac = completedProc.stdout.decode("utf-8").strip()
             return mac
+        else:
+            print("ERROR en instrucció d'accés a l'adreça Mac. codi error="+str(completedProc.returncode))
     except Exception as e:
         print("ERROR accedint a l'adreça Mac: "+str(e))
-        pass
     # si alguna cosa no va bé, retornem None (null)
     return None
-
-def get_isard_data(mac):
-    # TODO
-    return None, None
 
 def get_interface_by_mac(mac):
     interf = InterficieVM.objects.filter(mac=mac).first()
     return interf
+
