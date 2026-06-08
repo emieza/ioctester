@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'allauth.account',
     'allauth.socialaccount',
     'allauth.socialaccount.providers.google',
+    'allauth.socialaccount.providers.microsoft',
 ]
 
 MIDDLEWARE = [
@@ -88,12 +89,35 @@ AUTHENTICATION_BACKENDS = [
     'allauth.account.auth_backends.AuthenticationBackend',
 ]
 
+# llista de providers configurats correctament
+SOCIALACCOUNT_ENABLED = []
+
+# social account params
+# si no es posen les claus, deshabilitem l'autenticació
+GOOGLE_CLIENT_ID = env('GOOGLE_CLIENT_ID',default='')
+GOOGLE_SECRET = env('GOOGLE_SECRET',default='')
+MICROSOFT_CLIENT_ID = env('MICROSOFT_CLIENT_ID',default='')
+MICROSOFT_SECRET = env('MICROSOFT_SECRET',default='')
+MICROSOFT_KEY = env('MICROSOFT_KEY',default='')
+
+if GOOGLE_CLIENT_ID and GOOGLE_SECRET:
+    SOCIALACCOUNT_ENABLED.append("google")
+if MICROSOFT_KEY and MICROSOFT_SECRET and MICROSOFT_CLIENT_ID:
+    SOCIALACCOUNT_ENABLED.append("microsoft")
+
 SOCIALACCOUNT_PROVIDERS = {
     'google': {
         'APP': {
-            'client_id': env('GOOGLE_CLIENT_ID'),
-            'secret': env('GOOGLE_SECRET'),
+            'client_id': GOOGLE_CLIENT_ID,
+            'secret': GOOGLE_SECRET,
             'key': '' #env('GOOGLE_KEY') # no cal per a google
+        }
+    },
+    'microsoft': {
+        'APP': {
+            'client_id': MICROSOFT_CLIENT_ID,
+            'secret': MICROSOFT_SECRET,
+            'key': MICROSOFT_KEY
         }
     }
 }
@@ -117,10 +141,6 @@ ISARD_API_TOKEN = env("ISARD_API_TOKEN")
 
 DATABASES = {
     'default': env.db(),
-#    'default': {
-#        'ENGINE': 'django.db.backends.sqlite3',
-#        'NAME': BASE_DIR / 'db.sqlite3',
-#    }
 }
 
 

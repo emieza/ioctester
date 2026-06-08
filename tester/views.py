@@ -1,19 +1,34 @@
 from django.shortcuts import render
+from django.conf import settings
 from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 
 import subprocess, sys, os
 from .models import *
 
 def index(request):
     sets = Set.objects.filter(actiu=True)
-    return render( request, "index.html", {"sets":sets} )
+    ip = get_client_ip(request)
+    mac = get_client_mac(ip)
+    interf = get_interface_by_mac(mac)
+    return render( request, "index.html", {
+            "sets":sets,
+            "SOCIALACCOUNT_ENABLED":settings.SOCIALACCOUNT_ENABLED,
+            "isard_username": getattr(interf,"nom_usuari_isard",None),
+        })
 
-@login_required
+def logintest(request):
+    ip = get_client_ip(request)
+    mac = get_client_mac(ip)
+    interf = get_interface_by_mac(mac)
+    return HttpResponse("IP:"+ip+"<br>@Mac:"+str(mac)+"<br>User:"+str(getattr(interf,"nom_usuari_isard",None)))
+
+#@login_required
+# TODO: crear decorator @login_required_or_isardvdi_user
 def executa_set(request,set_id):
     ip = get_client_ip(request)
     mac = get_client_mac(ip)
-    isard_user_id, isard_username = get_isard_data(mac)
+    interf = get_interface_by_mac(mac)
 
     resultat = "---------------------------------------------------------------------------\n"
     resultat += "Iniciant set de proves {} per a usuari {} en IP={}\n".format(
@@ -164,6 +179,8 @@ def get_client_ip(request):
     return ip
 
 def get_client_mac(ip):
+    # PROVA : TODO : esborrar o comentar
+    #return "52:54:00:32:2a:fd"
     # Aconseguim adreça Mac del client
     instruccio = "ip neigh show {} | awk '{print $5}'"
     # Executar comanda
@@ -183,3 +200,7 @@ def get_client_mac(ip):
 def get_isard_data(mac):
     # TODO
     return None, None
+
+def get_interface_by_mac(mac):
+    interf = InterficieVM.objects.filter(mac=mac).first()
+    return interf
