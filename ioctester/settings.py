@@ -33,6 +33,8 @@ SECRET_KEY = env('SECRET_KEY')
 
 ALLOWED_HOSTS = ['*',]
 
+SERVER_SSH_PUBKEY=env('SERVER_SSH_PUBKEY')
+
 # Application definition
 
 INSTALLED_APPS = [

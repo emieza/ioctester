@@ -6,7 +6,20 @@ from django.http import JsonResponse, HttpResponse
 import subprocess, sys, os
 from .models import *
 
+def download_ssh_script(request):
+    SERVER_SSH_PUBKEY = settings.SERVER_SSH_PUBKEY
+    # TODO: assegurar que és l'usuari "isard"
+    client_ssh_script = f"""#!/bin/bash
+mkdir -p ~/.ssh
+echo "{SERVER_SSH_PUBKEY}" >> ~/.ssh/authorized_keys
+"""
+    # Crear la resposta com a descàrrega
+    response = HttpResponse(client_ssh_script, content_type='text/plain')
+    response['Content-Disposition'] = 'attachment; filename="setup_client_ssh.sh"'
+    return response
+
 def index(request):
+    # dades
     sets = Set.objects.filter(actiu=True)
     ip = get_client_ip(request)
     mac = get_client_mac(ip)
@@ -30,14 +43,20 @@ def executa_set(request,set_id):
     mac = get_client_mac(ip)
     interf = get_interface_by_mac(mac)
 
+    usuari_isard_id = None
+    nom_usuari_isard = None
+    if interf:
+        usuari_isard_id = interf.usuari_isard_id
+        nom_usuari_isard = interf.nom_usuari_isard
+
     resultat = "---------------------------------------------------------------------------\n"
     resultat += "Iniciant set de proves {} per a usuari {} en IP={}\n".format(
                     set_id, request.user, ip)
     try:
         myset = Set.objects.get(id=set_id)
         intent = Intent( set=myset, alumne=request.user, ip=ip, registre=resultat, mac=mac,
-                    usuari_isard_id=interf.usuari_isard_id, 
-                    nom_usuari_isard=interf.nom_usuari_isard )
+                    usuari_isard_id=usuari_isard_id, 
+                    nom_usuari_isard=nom_usuari_isard )
         i = 1
         punts_ok = 0
         punts_fail = 0
@@ -112,19 +131,19 @@ def executa_prova(prova,ip,intent_id,prova_num):
     f.close()
 
     # executem script
-    # opció BASHSRV:
     instruccio = None
+    ssh_options = "-o BatchMode=yes -o StrictHostKeyChecking=no"
     if prova.tipus=="BASHCLI":
         # traslladem script via scp
-        completedScp = subprocess.run ("scp {} isard@".format(nom_arxiu)+ip+
-                ":{}".format(nom_arxiu), shell=True, capture_output=True)
+        completedScp = subprocess.run (f"scp {ssh_options} {nom_arxiu} isard@{ip}:{nom_arxiu}",
+                            shell=True, capture_output=True)
         if completedScp.returncode!=0:
             # falla la transferència del script
             missatge += "\t[ERROR ssh " + str(completedScp.returncode) + \
-                    "] Probablement la teva màquina no es deixa accedir per SSH. Comprova que no hagis malmès l'usuari de connexió (isard).\n"
+                    "] Probablement la teva màquina no es deixa accedir per SSH. Assegura que treballes amb un usuari 'isard'. Descarrega't el script de connexió SSH i executa'l.\n"
             return False, missatge
         # si arribem aquí és que s'ha transferit OK l'script per scp
-        instruccio = "ssh isard@"+ip+" bash {}".format(nom_arxiu)
+        instruccio = f"ssh {ssh_options} isard@{ip} bash {nom_arxiu}"
     elif prova.tipus=="BASHSRV":
         instruccio = "bash {}".format(nom_arxiu)
     elif prova.tipus=="SELESRV":

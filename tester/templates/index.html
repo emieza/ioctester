@@ -17,6 +17,7 @@
 			float: right;
 			font-family: 'serif';
 			font-weight: normal;
+			margin: 0 .5em;
 		}
 		#resultat[disabled] {
 			color: blue;
@@ -114,8 +115,9 @@
 	{% get_social_accounts user as accounts %}
 	<div class="header">
 		IOC Tester
-		<span class="userbox">Hola {{ request.user.first_name }} {{ request.user.last_name }}.
-			<a href="/accounts/logout">Sortir</a></span>
+		<span class="userbox"><a href="/accounts/logout">Sortir</a></span>
+		<span class="userbox"><a href="/download_ssh_script">Script client SSH</a></span>
+		<span class="userbox">Hola, {{ request.user.first_name }} {{ request.user.last_name }}.</span>
 	</div>
 	{% endif %}
 
