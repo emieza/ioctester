@@ -13,7 +13,7 @@ Totes els intents de tests queden enregistrats al soft, tot i que de moment nom�
 Per identificar l'alumne:
 
   - **OAuth social login**: amb els proveïdors Google i Microsoft (cal configurar credencials a ```.env```). Es poden limitar els dominis vàlids dels emails. L'usuari es crearà si no existeix.
-  - **API de IsardVDI**: identificació via adreça Mac del client (el client no ha de introduir res). Cal haver configurat ISARD_API_TOKEN amb un token vàlid d'administrador i configurar al CRON l'actualització de la taula d'adreces Mac amb la comanda ```python manage.py update_macs_from_isard```
+  - **API de IsardVDI**: identificació via adreça Mac del client (el client no ha de introduir res). Només funcionarà si tenim connexió directa entre client i servidor (la Mac no serà vàlida si no és així). Cal haver configurat ISARD_API_TOKEN amb un token vàlid d'administrador i configurar al CRON l'actualització de la taula d'adreces Mac amb la comanda ```python manage.py update_macs_from_isard```
 
 Si es configura algun dels clients OAuth, al client no es mostrarà la identificació automàtica amb IsardVDI.
 
@@ -35,12 +35,89 @@ Dependències per al mòdul de Selenium (NodeJS, Firefox ESR i Selenium Driver):
     # npm i -g n selenium-webdriver
     # n lts
 
-Les SSH keys son necessàries per poder entrar al client
+Les SSH keys son necessàries per tal que el tester pugui entrar al client i efectuar els tests.
 Generar SSH keys, si no estan ja generades, **amb passphrase buida**:
 
     $ ssh-keygen -t rsa
 
-Copiar la clau pública
+Copiar la clau pública a l'arxiu ```.env```
+
+Descàrrega del software del servidor. Es pot realitzar a l'usuari principal (per ex. ```ìsard```):
+
+    git clone https://github.com/emieza/ioctester
+    cd ioctester
+    python3 -m venv env
+    source env/bin/activate
+    pip install -r requirements.txt
+    cp .env.example .env
+
+Ajustar els paràmetres a l'arxiu ```.env```:
+    SECRET_KEY=...random sequence...
+    SERVER_SSH_PUBKEY=""
+
+Ajustar els paràmetres optatius de OAuth si es vol configurar el social login.
+
+Podem engegar el servidor en mode de desenvolupament al port 8000:
+
+    (env) $ ./manage.py migrate
+    (env) $ ./manage.py createsuperuser
+    (env) $ ./manage.py runserver 0:8000
+
+Per tal que el servidor sigui accessible pels clients cal configurar la xarxa adequadament.
+
+## Xarxa LAN a IsardVDI
+
+Per facilitar la connexió dels clients, cal configurar una xarxa compartida que permeti la connexió directa entre client i servidor. En IsardVDI s'aconsegueix compartint una 3a xarxa compartida entre el servidor i les VMs clients.
+
+La configuració de xarxa en IsardVDI, tant del servidor com del client a testejar seria similar a:
+
+  - Xarxa Default (enp1s0)
+  - Xarxa Wireguard VPN (enp2s0)
+  - Xarxa compartida (enp3s0)
+
+A la xarxa compartida és on caldrà instal·lar un DHCP server al servidor per facilitar les IPs als clients i que accedeixin al IOC Tester.
+
+El servidor el configurarem amb una IP estàtica. Afegir a ```/etc/network/interfaces```:
+
+    allow-hotplug enp3s0
+    iface enp3s0 inet static
+    address 192.168.30.1
+    netmask 255.255.255.0
+
+Reiniciem xarxa perquè els canvis prenguin efecte:
+
+    systemctl restart networking.service
+
+El més fàcil és instal·lar ```dnsmasq``` al servidor:
+
+    apt install dnsmasq
+
+Editar ```/etc/dnsmasq.conf``` i afegir, per exemple:
+
+    dhcp-range=192.168.30.20,192.168.30.220,12h
+
+Reiniciem servei:
+
+    systemctl restart dnsmasq.service
+
+Si els clients tenen ben configurada la xarxa i obtenen IP del servidor, podran connectar-se amb http://192.168.30.1:8000 (servidor de desenvolupament) o http://192.168.30.1 si està en producció amb Apache i MySQL.
+
+
+## Desplegament amb Apache i MySQL
+
+Si es vol un entorn multiusuari concurrent, cal configurar MySQL (no serveix SQLite):
+
+    $ sudo mysql
+    mysql> create database ioctester;
+    mysql> create user ioctester@localhost identified by "mytesterpass";
+    mysql> grant all on ioctester.* to ioctester@localhost;
+
+Configurar a ```.env```:
+
+    DATABASE_URL=mysql://ioctester:mytesterpass@localhost:3306/ioctester
+
+...TODO... Configurar arxius de mod_wsgi a Apache2
+
 
 # Selenium JS tests
 
