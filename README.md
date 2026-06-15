@@ -103,9 +103,9 @@ Reiniciem servei:
 Si els clients tenen ben configurada la xarxa i obtenen IP del servidor, podran connectar-se amb http://192.168.30.1:8000 (servidor de desenvolupament) o http://192.168.30.1 si està en producció amb Apache i MySQL.
 
 
-## Desplegament amb Apache i MySQL
+## Desplegament amb Apache i MySQL/MariaDB
 
-Si es vol un entorn multiusuari concurrent, cal configurar MySQL (no serveix SQLite):
+Si es vol un entorn multiusuari concurrent, cal configurar MySQL o MariaDB (no serveix SQLite):
 
     $ sudo mysql
     mysql> create database ioctester;
