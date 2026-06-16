@@ -17,6 +17,7 @@
 			float: right;
 			font-family: 'serif';
 			font-weight: normal;
+			margin: 0 .5em;
 		}
 		#resultat[disabled] {
 			color: blue;
@@ -32,6 +33,25 @@
 			width: 0;
 			height: 1em;
 			background-color: grey;
+		}
+		loginbox {
+			display: block;
+			max-width: 500px;
+			margin: 0 auto 0 auto;
+			background-color: grey;
+		}
+		.login-option {
+			font-family: sans-serif;
+			text-decoration: none;
+			text-align: center;
+			float: left;
+			border: 1px black solid;
+			border-radius: 1em;
+			padding: 1em 2em;
+			margin: 1em;
+		}
+		.login-option img {
+			height: 3em;
 		}
 	</style>
 	<script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
@@ -66,7 +86,7 @@
 					textArea.scrollTop(textArea[0].scrollHeight-textArea.height());
 					setTimeout(function() {
 						// si no ho fem aixi, l'alert bloqueja el render del resultat
-						alert("Execució exitosa :)");
+						alert("Execució finalitzada :)");
 					},0);
 				},
 				fail: function(result) {
@@ -88,21 +108,51 @@
 </head>
 <body>
 
-{% load socialaccount %}
-{% if request.user.is_authenticated %}
-{% get_social_accounts user as accounts %}
+{% if SOCIALACCOUNT_ENABLED %}
+
+	{% load socialaccount %}
+	{% if request.user.is_authenticated %}
+	{% get_social_accounts user as accounts %}
+	<div class="header">
+		IOC Tester
+		<span class="userbox"><a href="/accounts/logout">Sortir</a></span>
+		<span class="userbox"><a href="/download_ssh_script">Script client SSH</a></span>
+		<span class="userbox">Hola, {{ request.user.first_name }} {{ request.user.last_name }}.</span>
+	</div>
+	{% endif %}
+
+	{% if not accounts %}
+		<div class="header">IOC Tester</div>
+		<loginbox>
+			{% if "google" in SOCIALACCOUNT_ENABLED %}
+			<a class="login-option" href='{% provider_login_url "google" %}'>Loga't via Google<br>
+				<img src="/static/google-logo.png" />
+			</a>
+			{% endif %}
+			{% if "microsoft" in SOCIALACCOUNT_ENABLED %}
+			<a class="login-option" href='{% provider_login_url "microsoft" %}'>Loga't via Microsoft<br>
+				<img src="/static/ms-logo.png" />
+			</a>
+			{% endif %}
+		</loginbox>
+	{% endif %}
 {% endif %}
 
-{% if not accounts %}
-	<div class="header">IOC Autotest</div>
-	<p>Loga't via <a href='{% provider_login_url "google" %}'>Google</a></p>
-{% else %}
+{% if isard_username and not SOCIALACCOUNT_ENABLED %}
 	<div class="header">
-		IOC Autotest
-		<span class="userbox">Hola {{ request.user.first_name }} {{ request.user.last_name }}.
-			<a href="/accounts/logout">Sortir</a></span>
+		IOC Tester
+		<span class="userbox">Usuari IsardVDI: {{ isard_username }}</span>
 	</div>
+{% endif %}
 
+{% if not SOCIALACCOUNT_ENABLED and not isard_username %}
+	<div class="header">
+		IOC Tester
+	</div>
+	{# TODO: spinnning mentre es fa login? #}
+	<p>Usuari IsardVDI no reconegut.</p>
+{% else %}
+{% if not SOCIALACCOUNT_ENABLED or request.user.is_authenticated %}
 
 	<p>Selecciona un set de proves a executar:</p>
 	<select id="set" onchange="canvia_set()">
@@ -126,6 +176,7 @@
 	<h2>Resultat de les proves</h2>
 	<textarea style="width:100%" cols="80" rows="25" id="resultat" disabled></textarea>
 
+{% endif %}
 {% endif %}
 
 </body>

@@ -26,6 +26,8 @@ urlpatterns = [
     #path('accounts/signup/', empty_view ),
     # 
     path('', views.index),
+    path('download_ssh_script', views.download_ssh_script),
+    path('logintest', views.logintest),
     path('admin/', admin.site.urls),
     path('accounts/', include('allauth.urls')),
     path('api/executa_set/<int:set_id>', views.executa_set),

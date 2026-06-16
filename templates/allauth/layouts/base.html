@@ -8,6 +8,31 @@
             {% block head_title %}
             {% endblock head_title %}
         </title>
+        <style>
+            html {
+                background-color: white;
+            }
+            body {
+                font-family: sans-serif;
+                max-width: 500px;
+                /*border: 1px solid black;*/
+                border-radius: 1.5em;
+                padding: 1em;
+                margin: 1em auto 1em auto;
+                background-color: #aaa;
+            }
+            h1 {
+            }
+            form {
+                text-align: center;
+            }
+            p {
+                font-family: 'serif';
+            }
+            button {
+                padding: 1em 2em 1em 2em;
+            }
+        </style>
         {% block extra_head %}
         {% endblock extra_head %}
     </head>
