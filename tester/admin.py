@@ -1,4 +1,6 @@
-from django.contrib import admin
+from django.contrib import admin, messages
+from django.core import serializers
+from django.http import HttpResponse
 
 from .models import *
 
@@ -22,12 +24,28 @@ class ProvaInline(admin.StackedInline):
     readonly_fields = ("connexio_ssh",)
     extra = 1
 
+@admin.action(description="Exporta els sets de proves.")
+def exporta_sets(modeladmin, request, queryset):
+    # exportem sets de proves
+    json_str = serializers.serialize('json', queryset, indent=2)
+    json_str = json_str[:-2] + "," # eliminem el final del array json ] per concatenar
+    # exportem proves
+    queryset2 = Prova.objects.filter(set__in=queryset)
+    json_str2 = serializers.serialize('json', queryset2, indent=2)
+    json_str += json_str2[1:] # concatenem el 2n array sense [
+    msg = "Exportat numero de sets="+str(len(queryset))
+    modeladmin.message_user(request, msg, messages.SUCCESS)
+    response = HttpResponse(json_str, content_type='application/json; charset=utf-8')
+    response['Content-Disposition'] = 'attachment; filename="export.json"'
+    return response
+
 class SetAdmin(admin.ModelAdmin):
     model = Set
     readonly_fields = ["creador"]
     list_display = ["nom","actiu","creador"]
     search_fields = ["nom","creador","categoria__nom"]
     inlines = [ProvaInline,]
+    actions = [exporta_sets,]
 
 class InterficieAdmin(admin.ModelAdmin):
     model = InterficieVM
@@ -40,3 +58,52 @@ admin.site.register(Prova,ProvaAdmin)
 admin.site.register(Intent,IntentAdmin)
 admin.site.register(Set,SetAdmin)
 admin.site.register(InterficieVM,InterficieAdmin)
+
+#
+# CUSTOM VIEWS
+#
+from django.views.generic import TemplateView
+from django_custom_admin_pages.views.admin_base_view import AdminBaseView
+from django import forms
+from django.shortcuts import render
+import json
+
+class ImportForm(forms.Form):
+    sets_file = forms.FileField()
+
+class ImportSets(AdminBaseView, TemplateView):
+    view_name = "Importar sets de proves"
+    template_name = "admin/import_sets.html"
+
+    # Formulari d'importació
+    def get(self, request, *args, **kwargs):
+        context = self.get_context_data(**kwargs)
+        context['form'] = ImportForm()
+        return self.render_to_response(context)
+
+    def post(self, request, *args, **kwargs):
+        form = ImportForm(request.POST, request.FILES)
+        context = self.get_context_data(*args, **kwargs)
+        context['form'] = form
+        if not form.is_valid():
+            context['error'] = "Si us plau, selecciona un fitxer vàlid."
+        else:
+            arxiu = request.FILES['sets_file']
+            try:
+                # llegir dades JSON de l'arxiu i crear objectes del model
+                for obj in serializers.deserialize('json', arxiu):
+                    #del obj.id
+                    print(obj)
+                    obj.save()
+                    print(obj)
+                context["message"] = "Arxiu correcte. Dades importades:\n\n"
+                # preview dades carregades
+                dades = json.load(arxiu)
+                context["message"] += json.dumps(dades,indent=4)
+            except Exception as e:
+                context["error"] = "Error al llegir l'arxiu JSON. " + repr(e)
+        
+        return render(request, self.template_name, context)
+
+
+admin.site.register_view(ImportSets)

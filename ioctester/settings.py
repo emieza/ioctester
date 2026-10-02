@@ -38,7 +38,9 @@ SERVER_SSH_PUBKEY=env('SERVER_SSH_PUBKEY')
 # Application definition
 
 INSTALLED_APPS = [
-    'django.contrib.admin',
+    #'django.contrib.admin', # incompatible amb django_custom_admin_pages
+    "django_custom_admin_pages",
+    "django_custom_admin_pages.admin.CustomAdminConfig",
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',

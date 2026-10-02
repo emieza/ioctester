@@ -1,0 +1,29 @@
+<!-- la_teva_app/templates/admin/la_meva_plantilla.html -->
+{% extends "admin/base.html" %}
+
+{% block title %}Importació de sets de proves{% endblock %}
+
+{% block content %}
+    <div id="content-main">
+        <h1>Importació de sets de proves</h1>
+        <p>Selecciona un arxiu JSON amb les dades dels sets de proves.</p>
+        
+        <p style="color:red;">{{error}}</p>
+
+        <pre style="color:blue;">{{message}}</pre>
+
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <table>
+            {{ form.as_table }}
+            </table>
+            
+            {% if form %}
+                <input class="default" type="submit" value="Importa arxiu" />
+            {% else %}
+                <p><a class="button default" href='{% url "admin:creació_-_càrrega_massiva_dusuaris" %}'>Importa les dades del CSV visualtizades</a></p>
+            {% endif %}
+        </form>
+    </div>
+{% endblock %}
