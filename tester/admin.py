@@ -26,10 +26,10 @@ class ProvaInline(admin.StackedInline):
 
 @admin.action(description="Exporta els sets de proves.")
 def exporta_sets(modeladmin, request, queryset):
-    # exportem sets de proves
+    # exportem sets de proves (primer i abans de les proves, important)
     json_str = serializers.serialize('json', queryset, indent=2)
     json_str = json_str[:-2] + "," # eliminem el final del array json ] per concatenar
-    # exportem proves
+    # exportem proves (dp dels sets)
     queryset2 = Prova.objects.filter(set__in=queryset)
     json_str2 = serializers.serialize('json', queryset2, indent=2)
     json_str += json_str2[1:] # concatenem el 2n array sense [
@@ -66,6 +66,7 @@ from django.views.generic import TemplateView
 from django_custom_admin_pages.views.admin_base_view import AdminBaseView
 from django import forms
 from django.shortcuts import render
+from django.apps import apps
 import json
 
 class ImportForm(forms.Form):
@@ -88,18 +89,43 @@ class ImportSets(AdminBaseView, TemplateView):
         if not form.is_valid():
             context['error'] = "Si us plau, selecciona un fitxer vàlid."
         else:
-            arxiu = request.FILES['sets_file']
             try:
+                dades_importades = ""
+                mapa_pks = {} # per guardar pks antigues (claus) i noves
                 # llegir dades JSON de l'arxiu i crear objectes del model
-                for obj in serializers.deserialize('json', arxiu):
-                    #del obj.id
-                    print(obj)
-                    obj.save()
-                    print(obj)
-                context["message"] = "Arxiu correcte. Dades importades:\n\n"
+                arxiu = request.FILES['sets_file']
+                dades = json.loads(arxiu.read())
+                dadesStr = json.dumps(dades,indent=2)
+                for item in dades:
+                    if item["model"]=="tester.set":
+                        pk_antiga = item["pk"]
+                        camps = dict(item["fields"])
+                        # Afegim marca de set importat
+                        # TODO: afegir num per evitar repetició del nom
+                        camps["nom"] = "IMPORTAT " + camps["nom"]
+                        # eliminem la categoria per evitar problemes de m2m
+                        del camps["categoria"]
+                        obj = Set(**camps)
+                        obj.pk = None
+                        obj._state.adding = True
+                        obj.save()
+                        mapa_pks[pk_antiga] = obj.pk
+                        # TODO: afegir item a la categoria IMPORTED
+                    elif item["model"]=="tester.prova":
+                        camps = dict(item["fields"])
+                        # mapejem a nova PK del set
+                        pk_set_antic = camps["set"]
+                        mySet = Set.objects.get(pk=mapa_pks[pk_set_antic])
+                        camps["set"] = mySet
+                        obj = Prova(**camps)
+                        obj.pk = None
+                        obj._state.adding = True
+                        obj.save()
+                    else:
+                        raise Exception("Objecte no identficat: "+str(type(dobj.object)))
                 # preview dades carregades
-                dades = json.load(arxiu)
-                context["message"] += json.dumps(dades,indent=4)
+                context["message"] = "Arxiu correcte. Dades importades:\n\n"
+                context["message"] += dadesStr
             except Exception as e:
                 context["error"] = "Error al llegir l'arxiu JSON. " + repr(e)
         

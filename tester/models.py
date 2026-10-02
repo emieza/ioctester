@@ -13,7 +13,7 @@ class Categoria(models.Model):
 class Set(models.Model):
     nom = models.CharField(max_length=200)
     actiu = models.BooleanField(default=True)
-    categoria = models.ManyToManyField(Categoria)
+    categoria = models.ManyToManyField(Categoria,null=True,blank=True)
     creador = models.ForeignKey(User,on_delete=models.SET_NULL,null=True)
     creacio = models.DateTimeField(auto_now=True)
     actualitzacio = models.DateTimeField(auto_now=True)
