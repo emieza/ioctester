@@ -22,7 +22,7 @@ class Command(BaseCommand):
         }
 
         # USUARIS
-        resposta = requests.get('https://elmeuescriptori.gestioeducativa.gencat.cat/api/v3/admin/users',
+        resposta = requests.get('https://elmeuescriptori.gestioeducativa.gencat.cat/api/v4/admin/items/users',
                                 headers=headers)
         if resposta.status_code != 200:
             #print("ERROR d'accés a l'API: el ISARD_API_TOKEN és probablement incorrecte.")
@@ -33,14 +33,21 @@ class Command(BaseCommand):
         # iterate users
         for user in resposta.json():
             print("\nID: {}\nUsername: {}".format(user["id"],user["name"]))
+            #print(user)
             uid = user["id"]
 
+            #if uid != "enricmieza":
+            #    continue
+
             # DESKTOPS
-            resposta2 = requests.get(f'https://elmeuescriptori.gestioeducativa.gencat.cat/api/v3/admin/user/{uid}/desktops',
+            resposta2 = requests.get(f'https://elmeuescriptori.gestioeducativa.gencat.cat/api/v4/admin/items/user/{uid}/desktops',
                                 headers=headers)
+            print(resposta2)
+            print(resposta2.json())
 
             # iterate desktops
             for desktop in resposta2.json():
+                print(str(desktop))
                 print("\t"+desktop["name"])
                 #print("\t"+str(desktop))
                 # iterate interfaces
