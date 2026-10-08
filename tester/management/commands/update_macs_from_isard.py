@@ -42,16 +42,23 @@ class Command(BaseCommand):
             # DESKTOPS
             resposta2 = requests.get(f'https://elmeuescriptori.gestioeducativa.gencat.cat/api/v4/admin/items/user/{uid}/desktops',
                                 headers=headers)
-            print(resposta2)
-            print(resposta2.json())
+            #print(resposta2)
+            #print(resposta2.json())
 
             # iterate desktops
             for desktop in resposta2.json():
-                print(str(desktop))
+                #print(str(desktop))
                 print("\t"+desktop["name"])
                 #print("\t"+str(desktop))
+                #/api/v4/item/desktop/{desktop_id}/get-networks
+                desktop_id = desktop["id"]
+                resposta3 = requests.get(f'https://elmeuescriptori.gestioeducativa.gencat.cat/api/v4/item/desktop/{desktop_id}/get-networks',
+                                headers=headers)
+
+                print(str(resposta3.json()))
+
                 # iterate interfaces
-                for interface in desktop["interfaces"]:
+                for interface in resposta3.json()["networks"]:
                     mac = interface["mac"]
                     #print(mac)
                     if mac in macs.keys():
