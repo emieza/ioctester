@@ -53,6 +53,17 @@ class InterficieAdmin(admin.ModelAdmin):
     search_fields = ["mac","nom_usuari_isard","nom_escriptori"]
     readonly_fields = ["mac","compte","nom_escriptori","nom_usuari_isard","usuari_isard_id"]
 
+class LogAdmin(admin.ModelAdmin):
+    exclude = ('get_text',)
+    search_fields = ("usuari","tag","level","ip","origen",)
+    list_display = ("usuari","tag","level","ip","origen","timestamp","get_text")
+    readonly_fields = list_display + ("text",)
+    ordering = ("-timestamp",)
+    def get_text(self,obj):
+        # retallem text
+        return obj.text[0:100]
+
+admin.site.register(Log,LogAdmin)
 admin.site.register(Categoria)
 admin.site.register(Prova,ProvaAdmin)
 admin.site.register(Intent,IntentAdmin)

@@ -199,8 +199,6 @@ def get_client_ip(request):
     return ip
 
 def get_client_mac(ip):
-    # PROVA : TODO : esborrar o comentar
-    #return "52:54:00:32:2a:fd"
     # Aconseguim adreça Mac del client
     instruccio = "ip neigh show "+ip+" | awk '{print $5}'"
     # Executar comanda

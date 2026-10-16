@@ -93,3 +93,22 @@ class InterficieVM(models.Model):
     compte = models.IntegerField(default=1,help_text="Si aquest valor és >1 vol dir que s'ha reptetit una mac en algun moment donat. Es registraran les dades finals, no les originals.")
     dades = models.TextField(null=True,blank=True)
     actualitzat = models.DateTimeField(auto_now=True)
+
+
+class LogLevel(models.TextChoices):
+    DEBUG = 'DEBUG', 'Debug'
+    WARNING = 'WARNING', 'Avís'
+    INFO = 'INFO', 'Informació'
+    ERROR = 'ERROR', 'Error'
+    CRITICAL = 'CRITICAL', 'Crític'
+class Log(models.Model):
+    usuari = models.CharField(max_length=100,null=True)
+    tag = models.CharField(max_length=40)
+    level = models.CharField(max_length=10,
+        choices=LogLevel.choices, default=LogLevel.INFO)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    ip = models.CharField(max_length=40,null=True) # pot ser IPv6
+    origen = models.CharField(max_length=100)
+    text = models.TextField()
+    def __str__(self):
+        return "{} - {}".format(self.usuari,self.tag)
