@@ -112,17 +112,19 @@ class Command(BaseCommand):
             # Amb les Macs actualitzades, revisem els Intents
             data = timezone.now() - timedelta(hours=12)
             intentsRevisats = 0
+            intentsTrobats = 0
             # TODO: filtrar 12h enrera ,data__lt=data ??
             for intent in Intent.objects.filter(nom_usuari_isard=None,mac__isnull=False):
                 interf = InterficieVM.objects.filter(mac=intent.mac).first()
+                intentsRevisats += 1
                 if interf:
-                    intentsRevisats += 1
+                    intentsTrobats += 1
                     intent.nom_usuari_isard = interf.nom_usuari_isard
                     intent.nom_escriptori = interf.nom_escriptori
                     intent.usuari_isard_id = interf.usuari_isard_id
 
-            logMessage += "\nIntents revisats = "+str(intentsRevisats) +"\n"
-            logMessage += "Temps després de revisions de Intentds: {}\n".format(str(datetime.now()))
+            logMessage += "\nIntents revisats: {} ; Intents trobats: {}\n".format(str(intentsRevisats),str(intentsTrobats))
+            logMessage += "Temps després de revisions de Intents: {}\n".format(str(datetime.now()))
 
             end_time = datetime.now()
             total_time = end_time - init_time
