@@ -42,8 +42,8 @@ def exporta_sets(modeladmin, request, queryset):
 class SetAdmin(admin.ModelAdmin):
     model = Set
     readonly_fields = ["creador"]
-    list_display = ["nom","actiu","creador"]
-    search_fields = ["nom","creador","categoria__nom"]
+    list_display = ["nom","actiu","creador","descripcio"]
+    search_fields = ["nom","creador__username","categoria__nom","descripcio"]
     inlines = [ProvaInline,]
     actions = [exporta_sets,]
 
