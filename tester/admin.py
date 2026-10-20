@@ -1,6 +1,7 @@
 from django.contrib import admin, messages
 from django.core import serializers
 from django.http import HttpResponse
+from adminsortable2.admin import SortableStackedInline,SortableAdminBase
 
 from .models import *
 
@@ -18,7 +19,7 @@ class ProvaAdmin(admin.ModelAdmin):
     list_display = ["nom","creador"]
     search_fields = ["nom","creador","categoria__nom"]
 
-class ProvaInline(admin.StackedInline):
+class ProvaInline(SortableStackedInline): #admin.StackedInline):
     model = Prova
     fields = ("nom","tipus","activa","connexio_ssh","pes","script","descripcio" )
     readonly_fields = ("connexio_ssh",)
@@ -39,7 +40,7 @@ def exporta_sets(modeladmin, request, queryset):
     response['Content-Disposition'] = 'attachment; filename="export.json"'
     return response
 
-class SetAdmin(admin.ModelAdmin):
+class SetAdmin(SortableAdminBase,admin.ModelAdmin):
     model = Set
     readonly_fields = ["creador"]
     list_display = ["nom","actiu","creador","descripcio"]
