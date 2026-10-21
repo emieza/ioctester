@@ -47,6 +47,7 @@ class SetAdmin(SortableAdminBase,admin.ModelAdmin):
     search_fields = ["nom","creador__username","categoria__nom","descripcio"]
     inlines = [ProvaInline,]
     actions = [exporta_sets,]
+    save_on_top = True
 
 class InterficieAdmin(admin.ModelAdmin):
     model = InterficieVM
