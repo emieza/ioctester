@@ -38,6 +38,7 @@ class Prova(models.Model):
     )
     class Meta:
         verbose_name_plural = "proves"
+        ordering = ["my_order",]
     nom = models.CharField(max_length=200)
     activa = models.BooleanField(default=True)
     set = models.ForeignKey(Set,on_delete=models.CASCADE,null=True)
@@ -54,6 +55,7 @@ class Prova(models.Model):
     connexio_ssh = models.BooleanField(default=True,
                 help_text="DEPRECATED, no utilitzar. Veure TIPUS en el seu lloc.")
     pes = models.FloatField(default=1.0);
+    my_order = models.PositiveIntegerField(default=0,blank=False,null=False)
     def __str__(self):
         return self.nom
     def save_model(self, request, instance, form, change):
