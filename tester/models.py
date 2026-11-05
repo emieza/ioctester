@@ -81,9 +81,13 @@ class Intent(models.Model):
     anotacions_docent = models.TextField(null=True,blank=True,
                 help_text="Anotacions i feedback del docent.")
     def __str__(self):
+        if not self.alumne:
+            return "-"
         return "{} - {} {} ({})".format( self.set.nom, self.alumne.first_name,
                 self.alumne.last_name, self.alumne.email)
     def nom_alumne(self):
+        if not self.alumne:
+            return "-"
         return "{} {} ({})".format( self.alumne.first_name,
                 self.alumne.last_name, self.alumne.email)
 
