@@ -1,7 +1,7 @@
 from django.contrib import admin, messages
 from django.core import serializers
 from django.http import HttpResponse
-from adminsortable2.admin import SortableStackedInline,SortableAdminBase
+from adminsortable2.admin import SortableStackedInline,SortableAdminBase,SortableAdminMixin
 
 from .models import *
 
@@ -40,7 +40,7 @@ def exporta_sets(modeladmin, request, queryset):
     response['Content-Disposition'] = 'attachment; filename="export.json"'
     return response
 
-class SetAdmin(SortableAdminBase,admin.ModelAdmin):
+class SetAdmin(SortableAdminMixin,admin.ModelAdmin):
     model = Set
     readonly_fields = ["creador"]
     list_display = ["nom","actiu","creador","descripcio"]

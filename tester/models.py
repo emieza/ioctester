@@ -17,10 +17,11 @@ class Set(models.Model):
     creador = models.ForeignKey(User,on_delete=models.SET_NULL,null=True)
     creacio = models.DateTimeField(auto_now=True)
     actualitzacio = models.DateTimeField(auto_now=True)
-    descripcio = models.TextField(
+    descripcio = models.TextField(        
                 help_text="Descripció pública per a l'alumnat.")
     anotacions = models.TextField(null=True,blank=True,
                 help_text="Anotacions privades del docent.")
+    my_order = models.PositiveIntegerField(default=0,blank=False,null=False)
     def __str__(self):
         return self.nom
     def save_model(self, request, instance, form, change):
@@ -29,6 +30,8 @@ class Set(models.Model):
             instance.creador = user
         instance.save()
         return instance
+    class Meta:
+        ordering = ['my_order']
 
 class Prova(models.Model):
     TIPUS = (
