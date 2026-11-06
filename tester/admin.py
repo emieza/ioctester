@@ -2,6 +2,8 @@ from django.contrib import admin, messages
 from django.core import serializers
 from django.http import HttpResponse
 from adminsortable2.admin import SortableStackedInline,SortableAdminBase
+from django import forms
+from django_ace import AceWidget
 
 from .models import *
 
@@ -13,14 +15,29 @@ class IntentAdmin(admin.ModelAdmin):
     list_display = ["set","nom_alumne","resultat","ip","nom_usuari_isard","data"]
     search_fields = ["alumne__first_name","alumne__last_name","alumne__email","set__nom","ip"]
 
+class ProvaForm(forms.ModelForm):
+    class Meta:
+        model = Prova
+        fields = ("nom","tipus","activa","connexio_ssh","pes","script","descripcio" )
+        widgets = {
+            'script': AceWidget(
+                mode='sh',
+                theme='chrome', #'monokai',
+                width="100%",  # Passar None i controlar la mida amb CSS és el recomanat
+                height=None
+            ),
+        }
+
 class ProvaAdmin(admin.ModelAdmin):
     model = Prova
+    form = ProvaForm
     readonly_fields = ["creador"]
     list_display = ["nom","creador"]
     search_fields = ["nom","creador","categoria__nom"]
 
 class ProvaInline(SortableStackedInline): #admin.StackedInline):
     model = Prova
+    form = ProvaForm
     fields = ("nom","tipus","activa","connexio_ssh","pes","script","descripcio" )
     readonly_fields = ("connexio_ssh",)
     extra = 1
