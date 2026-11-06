@@ -28,11 +28,22 @@ class ProvaForm(forms.ModelForm):
             ),
         }
 
+    class Media:
+        js = (
+            "django_ace/ace/mode-javascript.js",
+            "tester/js/prova_ace_mode.js",
+        )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        mode = 'javascript' if getattr(self.instance, 'tipus', None) == 'SELESRV' else 'sh'
+        self.fields['script'].widget.mode = mode
+
 class ProvaAdmin(admin.ModelAdmin):
     model = Prova
     form = ProvaForm
     readonly_fields = ["creador"]
-    list_display = ["nom","creador"]
+    list_display = ["nom","set","creador"]
     search_fields = ["nom","creador","categoria__nom"]
 
 class ProvaInline(SortableStackedInline): #admin.StackedInline):
