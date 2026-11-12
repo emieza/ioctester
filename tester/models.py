@@ -17,10 +17,11 @@ class Set(models.Model):
     creador = models.ForeignKey(User,on_delete=models.SET_NULL,null=True)
     creacio = models.DateTimeField(auto_now=True)
     actualitzacio = models.DateTimeField(auto_now=True)
-    descripcio = models.TextField(
+    descripcio = models.TextField(        
                 help_text="Descripció pública per a l'alumnat.")
     anotacions = models.TextField(null=True,blank=True,
                 help_text="Anotacions privades del docent.")
+    my_order = models.PositiveIntegerField(default=0,blank=False,null=False)
     def __str__(self):
         return self.nom
     def save_model(self, request, instance, form, change):
@@ -29,6 +30,8 @@ class Set(models.Model):
             instance.creador = user
         instance.save()
         return instance
+    class Meta:
+        ordering = ['my_order']
 
 class Prova(models.Model):
     TIPUS = (
@@ -38,6 +41,7 @@ class Prova(models.Model):
     )
     class Meta:
         verbose_name_plural = "proves"
+        ordering = ["my_order",]
     nom = models.CharField(max_length=200)
     activa = models.BooleanField(default=True)
     set = models.ForeignKey(Set,on_delete=models.CASCADE,null=True)
@@ -54,6 +58,7 @@ class Prova(models.Model):
     connexio_ssh = models.BooleanField(default=True,
                 help_text="DEPRECATED, no utilitzar. Veure TIPUS en el seu lloc.")
     pes = models.FloatField(default=1.0);
+    my_order = models.PositiveIntegerField(default=0,blank=False,null=False)
     def __str__(self):
         return self.nom
     def save_model(self, request, instance, form, change):
@@ -79,9 +84,13 @@ class Intent(models.Model):
     anotacions_docent = models.TextField(null=True,blank=True,
                 help_text="Anotacions i feedback del docent.")
     def __str__(self):
+        if not self.alumne:
+            return "-"
         return "{} - {} {} ({})".format( self.set.nom, self.alumne.first_name,
                 self.alumne.last_name, self.alumne.email)
     def nom_alumne(self):
+        if not self.alumne:
+            return "-"
         return "{} {} ({})".format( self.alumne.first_name,
                 self.alumne.last_name, self.alumne.email)
 

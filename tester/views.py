@@ -54,7 +54,10 @@ def executa_set(request,set_id):
                     set_id, request.user, ip)
     try:
         myset = Set.objects.get(id=set_id)
-        intent = Intent( set=myset, alumne=request.user, ip=ip, registre=resultat, mac=mac,
+        user = None
+        if request.user.is_authenticated:
+            user = request.user
+        intent = Intent( set=myset, alumne=user, ip=ip, registre=resultat, mac=mac,
                     usuari_isard_id=usuari_isard_id, 
                     nom_usuari_isard=nom_usuari_isard )
         i = 1

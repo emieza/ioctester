@@ -1,6 +1,9 @@
 from django.contrib import admin, messages
 from django.core import serializers
 from django.http import HttpResponse
+from adminsortable2.admin import SortableStackedInline,SortableAdminBase,SortableAdminMixin
+from django import forms
+from django_ace import AceWidget
 
 from .models import *
 
@@ -12,14 +15,40 @@ class IntentAdmin(admin.ModelAdmin):
     list_display = ["set","nom_alumne","resultat","ip","nom_usuari_isard","data"]
     search_fields = ["alumne__first_name","alumne__last_name","alumne__email","set__nom","ip","nom_usuari_isard"]
 
+class ProvaForm(forms.ModelForm):
+    class Meta:
+        model = Prova
+        fields = ("nom","tipus","activa","connexio_ssh","pes","script","descripcio" )
+        widgets = {
+            'script': AceWidget(
+                mode='sh',
+                theme='chrome', #'monokai',
+                width="100%",  # Passar None i controlar la mida amb CSS és el recomanat
+                height=None
+            ),
+        }
+
+    class Media:
+        js = (
+            "django_ace/ace/mode-javascript.js",
+            "tester/js/prova_ace_mode.js",
+        )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        mode = 'javascript' if getattr(self.instance, 'tipus', None) == 'SELESRV' else 'sh'
+        self.fields['script'].widget.mode = mode
+
 class ProvaAdmin(admin.ModelAdmin):
     model = Prova
+    form = ProvaForm
     readonly_fields = ["creador"]
-    list_display = ["nom","creador"]
+    list_display = ["nom","set","creador"]
     search_fields = ["nom","creador","categoria__nom"]
 
-class ProvaInline(admin.StackedInline):
+class ProvaInline(SortableStackedInline): #admin.StackedInline):
     model = Prova
+    form = ProvaForm
     fields = ("nom","tipus","activa","connexio_ssh","pes","script","descripcio" )
     readonly_fields = ("connexio_ssh",)
     extra = 1
@@ -39,13 +68,14 @@ def exporta_sets(modeladmin, request, queryset):
     response['Content-Disposition'] = 'attachment; filename="export.json"'
     return response
 
-class SetAdmin(admin.ModelAdmin):
+class SetAdmin(SortableAdminMixin,admin.ModelAdmin):
     model = Set
     readonly_fields = ["creador"]
     list_display = ["nom","actiu","creador","descripcio"]
     search_fields = ["nom","creador__username","categoria__nom","descripcio"]
     inlines = [ProvaInline,]
     actions = [exporta_sets,]
+    save_on_top = True
 
 class InterficieAdmin(admin.ModelAdmin):
     model = InterficieVM
