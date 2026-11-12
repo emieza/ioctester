@@ -10,7 +10,7 @@ class IntentAdmin(admin.ModelAdmin):
     exclude = []
     readonly_fields = ["set","alumne","resultat","registre","ip"]
     list_display = ["set","nom_alumne","resultat","ip","nom_usuari_isard","data"]
-    search_fields = ["alumne__first_name","alumne__last_name","alumne__email","set__nom","ip"]
+    search_fields = ["alumne__first_name","alumne__last_name","alumne__email","set__nom","ip","nom_usuari_isard"]
 
 class ProvaAdmin(admin.ModelAdmin):
     model = Prova
